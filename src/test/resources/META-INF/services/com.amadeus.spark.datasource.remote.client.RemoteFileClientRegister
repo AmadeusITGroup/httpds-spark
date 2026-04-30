@@ -1,0 +1,6 @@
+com.amadeus.spark.datasource.remote.client.MockRemoteFileClient
+com.amadeus.spark.datasource.remote.client.MockForTestsRemoteFileClient
+com.clientregistrytest.MockForExternalTestsRemoteFileClient
+com.clientregistrytest.MockForExternalFailSecTestsRemoteFileClient
+com.clientregistrytest.MockForExternalFailTestsRemoteFileClient
+com.clientregistrytest.MockForExternalTestsRemoteFileClientSorter

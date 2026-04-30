@@ -1,0 +1,588 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.amadeus.spark</groupId>
+    <artifactId>httpds-spark</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
+
+    <name>Spark HTTP DataSource</name>
+    <description>A custom Apache Spark DataSource V2 connector for HTTP end points</description>
+
+    <properties>
+        <!-- Scala -->
+        <scala.version>2.12.18</scala.version>
+        <scala.binary.version>2.12</scala.binary.version>
+
+        <!-- Scoverage -->
+        <maven.scoverage.minimum.coverage>98.7</maven.scoverage.minimum.coverage>
+        <maven.scoverage.fail.on.minimum>false</maven.scoverage.fail.on.minimum>
+        <maven.scoverage.plugin.version>2.0.6</maven.scoverage.plugin.version>
+        <phase.scoverage>verify</phase.scoverage>
+
+        <!-- Spark -->
+        <spark.version>3.5.0</spark.version>
+
+        <!-- Java -->
+        <java.version>11</java.version>
+        <maven.compiler.source>${java.version}</maven.compiler.source>
+        <maven.compiler.target>${java.version}</maven.compiler.target>
+
+        <!-- Encoding -->
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+        <!-- Testing -->
+        <scalatest.version>3.2.17</scalatest.version>
+        <mockito.version>5.8.0</mockito.version>
+
+        <!-- Logging -->
+        <scala-logging.version>3.9.5</scala-logging.version>
+        <slf4j.version>2.0.9</slf4j.version>
+
+        <!-- Plugins -->
+        <scala-maven-plugin.version>4.8.1</scala-maven-plugin.version>
+        <maven-shade-plugin.version>3.5.1</maven-shade-plugin.version>
+        <maven-surefire-plugin.version>3.2.2</maven-surefire-plugin.version>
+        <scalatest-maven-plugin.version>2.2.0</scalatest-maven-plugin.version>
+        <maven-jar-plugin.version>3.3.0</maven-jar-plugin.version>
+
+        <!-- Artifactory -->
+        <version.artifactory.plugin>3.5.2</version.artifactory.plugin>
+        <ar.envVarsExcludePatterns>*PASSWORD*,*password*</ar.envVarsExcludePatterns>
+        <ar.repoKey>mvn-built</ar.repoKey>
+        <ar.snapshotRepoKey>mvn-built</ar.snapshotRepoKey>
+    </properties>
+
+    <dependencies>
+        <!-- Scala Library -->
+        <dependency>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-library</artifactId>
+            <version>${scala.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- Apache Spark Core -->
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-core_${scala.binary.version}</artifactId>
+            <version>${spark.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- Apache Spark SQL -->
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-sql_${scala.binary.version}</artifactId>
+            <version>${spark.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- Apache Spark Catalyst -->
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-catalyst_${scala.binary.version}</artifactId>
+            <version>${spark.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- HTTP Client (for REST API integration) -->
+        <dependency>
+            <groupId>com.softwaremill.sttp.client4</groupId>
+            <artifactId>core_${scala.binary.version}</artifactId>
+            <version>4.0.13</version>
+        </dependency>
+
+        <!-- JSON Processing -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.15.3</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.module</groupId>
+            <artifactId>jackson-module-scala_${scala.binary.version}</artifactId>
+            <version>2.15.3</version>
+        </dependency>
+
+        <!-- Logging -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>${slf4j.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.typesafe.scala-logging</groupId>
+            <artifactId>scala-logging_${scala.binary.version}</artifactId>
+            <version>${scala-logging.version}</version>
+        </dependency>
+
+        <!-- ==================== Test Dependencies ==================== -->
+
+        <!-- ScalaTest -->
+        <dependency>
+            <groupId>org.scalatest</groupId>
+            <artifactId>scalatest_${scala.binary.version}</artifactId>
+            <version>${scalatest.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- ScalaTest + Mockito Integration -->
+        <dependency>
+            <groupId>org.scalatestplus</groupId>
+            <artifactId>mockito-5-8_${scala.binary.version}</artifactId>
+            <version>3.2.17.0</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Spark SQL Test Utilities -->
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-sql_${scala.binary.version}</artifactId>
+            <version>${spark.version}</version>
+            <classifier>tests</classifier>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Spark Catalyst Test Utilities -->
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-catalyst_${scala.binary.version}</artifactId>
+            <version>${spark.version}</version>
+            <classifier>tests</classifier>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- WireMock for HTTP integration testing -->
+        <dependency>
+            <groupId>org.wiremock</groupId>
+            <artifactId>wiremock</artifactId>
+            <version>3.13.2</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <sourceDirectory>src/main/scala</sourceDirectory>
+        <testSourceDirectory>src/test/scala</testSourceDirectory>
+
+        <plugins>
+            <!-- Scala Maven Plugin -->
+            <plugin>
+                <groupId>net.alchim31.maven</groupId>
+                <artifactId>scala-maven-plugin</artifactId>
+                <version>${scala-maven-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>scala-compile-first</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                            <goal>compile</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>scala-test-compile</id>
+                        <phase>process-test-resources</phase>
+                        <goals>
+                            <goal>testCompile</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <scalaVersion>${scala.version}</scalaVersion>
+                    <args>
+                        <arg>-deprecation</arg>
+                        <arg>-feature</arg>
+                        <arg>-unchecked</arg>
+                        <arg>-Xlint</arg>
+                        <arg>-Ywarn-dead-code</arg>
+                        <arg>-Ywarn-unused:imports</arg>
+                    </args>
+                    <jvmArgs>
+                        <jvmArg>-Xms1024m</jvmArg>
+                        <jvmArg>-Xmx2048m</jvmArg>
+                    </jvmArgs>
+                </configuration>
+            </plugin>
+
+            <!-- Scoverage Maven Plugin -->
+            <plugin>
+                <groupId>org.scoverage</groupId>
+                <artifactId>scoverage-maven-plugin</artifactId>
+                <version>${maven.scoverage.plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>scala-coverage</id>
+                        <phase>${phase.scoverage}</phase>
+                        <goals>
+                            <goal>report</goal>
+                            <goal>check-only</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <scalaVersion>${scala.version}</scalaVersion>
+                    <highlighting>true</highlighting>
+                    <minimumCoverage>${maven.scoverage.minimum.coverage}</minimumCoverage>
+                    <failOnMinimumCoverage>${maven.scoverage.fail.on.minimum}</failOnMinimumCoverage>
+                </configuration>
+            </plugin>
+
+            <!-- Disable Surefire (use ScalaTest instead) -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${maven-surefire-plugin.version}</version>
+                <configuration>
+                    <skipTests>true</skipTests>
+                </configuration>
+            </plugin>
+
+            <!-- ScalaTest Maven Plugin -->
+            <plugin>
+                <groupId>org.scalatest</groupId>
+                <artifactId>scalatest-maven-plugin</artifactId>
+                <version>${scalatest-maven-plugin.version}</version>
+                <configuration>
+                    <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
+                    <junitxml>.</junitxml>
+                    <filereports>TestSuiteReport.txt</filereports>
+                    <parallel>false</parallel>
+                    <!-- Exclude integration tests from regular test runs -->
+                    <tagsToExclude>IntegrationTest</tagsToExclude>
+                    <!-- JVM args for Java 17+ compatibility with Spark -->
+                    <argLine>
+                        --add-opens=java.base/java.lang=ALL-UNNAMED
+                        --add-opens=java.base/java.lang.invoke=ALL-UNNAMED
+                        --add-opens=java.base/java.lang.reflect=ALL-UNNAMED
+                        --add-opens=java.base/java.io=ALL-UNNAMED
+                        --add-opens=java.base/java.net=ALL-UNNAMED
+                        --add-opens=java.base/java.nio=ALL-UNNAMED
+                        --add-opens=java.base/java.util=ALL-UNNAMED
+                        --add-opens=java.base/java.util.concurrent=ALL-UNNAMED
+                        --add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED
+                        --add-opens=java.base/sun.nio.ch=ALL-UNNAMED
+                        --add-opens=java.base/sun.nio.cs=ALL-UNNAMED
+                        --add-opens=java.base/sun.security.action=ALL-UNNAMED
+                        --add-opens=java.base/sun.util.calendar=ALL-UNNAMED
+                        --add-opens=java.security.jgss/sun.security.krb5=ALL-UNNAMED
+                    </argLine>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>test</id>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Maven JAR Plugin -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>${maven-jar-plugin.version}</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+
+            <!-- Maven Shade Plugin - disabled by default, use -Pshaded to enable -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>${maven-shade-plugin.version}</version>
+            </plugin>
+
+            <!-- Source Plugin -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>3.3.0</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar-no-fork</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Maven Assembly Plugin for jar-with-dependencies -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>3.6.0</version>
+                <executions>
+                    <execution>
+                        <id>make-assembly</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <descriptorRefs>
+                                <descriptorRef>jar-with-dependencies</descriptorRef>
+                            </descriptorRefs>
+                            <archive>
+                                <manifest>
+                                    <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                                    <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                                </manifest>
+                            </archive>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Scaladoc -->
+            <plugin>
+                <groupId>net.alchim31.maven</groupId>
+                <artifactId>scala-maven-plugin</artifactId>
+                <version>${scala-maven-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>doc-jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- JFrog Artifactory Maven Plugin -->
+            <plugin>
+                <groupId>org.jfrog.buildinfo</groupId>
+                <artifactId>artifactory-maven-plugin</artifactId>
+                <version>${version.artifactory.plugin}</version>
+                <executions>
+                    <execution>
+                        <id>build-info</id>
+                        <phase>install</phase>
+                        <goals>
+                            <goal>publish</goal>
+                        </goals>
+                        <configuration>
+                            <artifactory>
+                                <includeEnvVars>true</includeEnvVars>
+                                <envVarsExcludePatterns>${ar.envVarsExcludePatterns}</envVarsExcludePatterns>
+                                <timeoutSec>120</timeoutSec>
+                            </artifactory>
+                            <publisher>
+                                <contextUrl>https://repository.rnd.amadeus.net</contextUrl>
+                                <username>${env.AR_USER}</username>
+                                <password>${env.AR_PASSWORD}</password>
+                                <repoKey>${ar.repoKey}</repoKey>
+                                <snapshotRepoKey>${ar.snapshotRepoKey}</snapshotRepoKey>
+                            </publisher>
+                            <buildInfo>
+                                <buildName>${env.AR_BUILD_NAME}</buildName>
+                                <buildNumber>${project.version}</buildNumber>
+                                <buildUrl>${env.BUILD_URL}</buildUrl>
+                            </buildInfo>
+                            <licenses>
+                                <autoDiscover>true</autoDiscover>
+                            </licenses>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <!-- Profile for shaded JAR (use: mvn package -Pshaded) -->
+        <!-- Produces: spark-imperva-datasource-1.0.0-SNAPSHOT-shaded.jar -->
+        <profile>
+            <id>shaded</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-shade-plugin</artifactId>
+                        <version>${maven-shade-plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <id>shade-jar</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>shade</goal>
+                                </goals>
+                                <configuration>
+                                    <shadedArtifactAttached>true</shadedArtifactAttached>
+                                    <shadedClassifierName>shaded</shadedClassifierName>
+                                    <artifactSet>
+                                        <excludes>
+                                            <!-- Exclude Spark and Hadoop (provided by cluster) -->
+                                            <exclude>org.apache.spark:*</exclude>
+                                            <exclude>org.apache.hadoop:*</exclude>
+                                            <exclude>org.scala-lang:*</exclude>
+                                        </excludes>
+                                    </artifactSet>
+                                    <filters>
+                                        <filter>
+                                            <artifact>*:*</artifact>
+                                            <excludes>
+                                                <exclude>META-INF/*.SF</exclude>
+                                                <exclude>META-INF/*.DSA</exclude>
+                                                <exclude>META-INF/*.RSA</exclude>
+                                            </excludes>
+                                        </filter>
+                                    </filters>
+                                    <transformers>
+                                        <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer"/>
+                                        <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                                    </transformers>
+                                    <relocations>
+                                        <!-- Relocate dependencies to avoid conflicts -->
+                                        <relocation>
+                                            <pattern>com.fasterxml.jackson</pattern>
+                                            <shadedPattern>com.amadeus.spark.shaded.jackson</shadedPattern>
+                                        </relocation>
+                                        <relocation>
+                                            <pattern>sttp</pattern>
+                                            <shadedPattern>com.amadeus.spark.shaded.sttp</shadedPattern>
+                                        </relocation>
+                                    </relocations>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <!-- Profile for shaded fat JAR with all dependencies (use: mvn package -Pshaded-fat-jar) -->
+        <!-- Produces: spark-imperva-datasource-1.0.0-SNAPSHOT-shaded-jar-with-dependencies.jar -->
+        <profile>
+            <id>shaded-fat-jar</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-shade-plugin</artifactId>
+                        <version>${maven-shade-plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <id>shade-fat-jar</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>shade</goal>
+                                </goals>
+                                <configuration>
+                                    <shadedArtifactAttached>true</shadedArtifactAttached>
+                                    <shadedClassifierName>shaded-jar-with-dependencies</shadedClassifierName>
+                                    <artifactSet>
+                                        <includes>
+                                            <include>*:*</include>
+                                        </includes>
+                                        <excludes>
+                                            <!-- Exclude Spark and Hadoop (provided by cluster) -->
+                                            <exclude>org.apache.spark:*</exclude>
+                                            <exclude>org.apache.hadoop:*</exclude>
+                                            <exclude>org.scala-lang:*</exclude>
+                                        </excludes>
+                                    </artifactSet>
+                                    <filters>
+                                        <filter>
+                                            <artifact>*:*</artifact>
+                                            <excludes>
+                                                <exclude>META-INF/*.SF</exclude>
+                                                <exclude>META-INF/*.DSA</exclude>
+                                                <exclude>META-INF/*.RSA</exclude>
+                                            </excludes>
+                                        </filter>
+                                    </filters>
+                                    <transformers>
+                                        <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer"/>
+                                        <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                                        <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                                            <resource>reference.conf</resource>
+                                        </transformer>
+                                    </transformers>
+                                    <relocations>
+                                        <!-- Relocate dependencies to avoid conflicts -->
+                                        <relocation>
+                                            <pattern>com.fasterxml.jackson</pattern>
+                                            <shadedPattern>com.amadeus.spark.shaded.jackson</shadedPattern>
+                                        </relocation>
+                                        <relocation>
+                                            <pattern>sttp</pattern>
+                                            <shadedPattern>com.amadeus.spark.shaded.sttp</shadedPattern>
+                                        </relocation>
+                                    </relocations>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <!-- Profile for running integration tests -->
+        <profile>
+            <id>integration-tests</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.scalatest</groupId>
+                        <artifactId>scalatest-maven-plugin</artifactId>
+                        <version>${scalatest-maven-plugin.version}</version>
+                        <configuration>
+                            <!-- Run all integration test suites -->
+                            <suites>
+                                com.amadeus.spark.datasource.MockServerIntegrationTest,com.amadeus.spark.datasource.StreamingIntegrationTest
+                            </suites>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>integration-test</id>
+                                <phase>test</phase>
+                                <goals>
+                                    <goal>test</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <!-- Profile for Spark 3.4.x compatibility -->
+        <profile>
+            <id>spark-3.4</id>
+            <properties>
+                <spark.version>3.4.2</spark.version>
+            </properties>
+        </profile>
+
+        <!-- Profile for Spark 3.3.x compatibility -->
+        <profile>
+            <id>spark-3.3</id>
+            <properties>
+                <spark.version>3.3.4</spark.version>
+            </properties>
+        </profile>
+    </profiles>
+
+    <repositories>
+        <repository>
+            <id>central</id>
+            <url>https://repo.maven.apache.org/maven2</url>
+        </repository>
+    </repositories>
+</project>
