@@ -1,0 +1,37 @@
+package com.amadeus.spark.datasource.remote.client
+
+import com.amadeus.spark.datasource.remote.conf.RemoteFileDataSourceOptions
+
+class MockForTestsRemoteFileClient(val options: RemoteFileDataSourceOptions) extends RemoteFileClient {
+
+  /** default constructor */
+  def this() = this(null)
+
+  /**
+   * Lists available log files from the remote endpoint.
+   *
+   * @return sequence of RestFile representing available log files
+   */
+  override def listLogFiles(): Seq[RemoteFile] = Seq.empty
+
+  /**
+   * Downloads a log file and returns the result with metadata.
+   *
+   * @param filename name of the log file to download
+   * @return DownloadResult representing the outcome of the download operation
+   */
+  override def downloadLogFileWithResult(filename: String): DownloadResult = throw new NotImplementedError()
+
+  /**
+   * Closes the client and releases any resources.
+   */
+  override def close(): Unit = throw new NotImplementedError()
+
+  /**
+   * The string that represents the format that this client provider uses.
+   * This is overridden by children to provide a nice alias for the clients.
+   * For example:
+   * override def shortName(): String = "rest-client"
+   */
+  override def shortName(): String = "mock-test"
+}
