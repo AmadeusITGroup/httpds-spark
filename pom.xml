@@ -24,7 +24,7 @@
         <phase.scoverage>verify</phase.scoverage>
 
         <!-- Spark -->
-        <spark.version>3.5.0</spark.version>
+        <spark.version>3.5.7</spark.version>
 
         <!-- Java -->
         <java.version>11</java.version>
