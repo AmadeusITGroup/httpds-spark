@@ -10,7 +10,7 @@ class MockForTestsRemoteFileClient(val options: RemoteFileDataSourceOptions) ext
   /**
    * Lists available log files from the remote endpoint.
    *
-   * @return sequence of RestFile representing available log files
+   * @return sequence of [[RemoteFile]] representing available log files
    */
   override def listLogFiles(): Seq[RemoteFile] = Seq.empty
 

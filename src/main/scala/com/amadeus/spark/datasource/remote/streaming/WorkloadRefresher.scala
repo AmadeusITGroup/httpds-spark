@@ -184,7 +184,7 @@ object WorkloadRefresher {
    *
    * @param oldFiles previously known files
    * @param freshFiles newly fetched files
-   * @return merged list of RestFile
+   * @return merged list of [[RemoteFile]]
    */
   private[WorkloadRefresher] def mergeFiles(oldFiles: Seq[RemoteFile], freshFiles: Seq[RemoteFile]): Seq[RemoteFile] = {
     val freshFileNames = freshFiles.map(_.name).toSet

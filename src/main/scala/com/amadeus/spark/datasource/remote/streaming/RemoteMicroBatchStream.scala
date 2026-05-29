@@ -330,7 +330,7 @@ class RemoteMicroBatchStream(schema: StructType, options: CaseInsensitiveStringM
 
       metrics.put("latestConsumedOffsetFileCount", remoteFileOffset.indexFiles.size.toString)
       metrics.put("latestConsumedOffsetCreatedAt", remoteFileOffset.createdAt.toString)
-      metrics.put("nbDiscoveredFilesRestFileOffset", workloadManager.nbDiscoveredFiles.toString)
+      metrics.put("nbDiscoveredFiles", workloadManager.nbDiscoveredFiles.toString)
     }
 
     metrics

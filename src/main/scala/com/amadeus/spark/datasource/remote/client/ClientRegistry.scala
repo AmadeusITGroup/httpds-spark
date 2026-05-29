@@ -7,7 +7,7 @@ import scala.collection.JavaConverters.iterableAsScalaIterableConverter
 
 /**
  * Registry for remote file clients.
- * Uses Java's ServiceLoader to discover implementations of RestFileClientRegister.
+ * Uses Java's ServiceLoader to discover implementations of [[RemoteFileClientRegister]].
  */
 object ClientRegistry extends Logging {
 
@@ -52,7 +52,7 @@ object ClientRegistry extends Logging {
    * Otherwise, an exception is thrown to indicate ambiguity.
    *
    * @param provider the short name of the provider
-   * @param clients  the list of RestFileClientRegister instances found
+   * @param clients  the list of [[RemoteFileClientRegister]] instances found
    * @return the Class object of the selected client
    */
   private def loadFromMultipleClients(provider: String, clients: List[RemoteFileClientRegister]): Class[_] = {

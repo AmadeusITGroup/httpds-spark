@@ -238,7 +238,7 @@ object RemoteFileDataSourceOptions extends Logging {
   }
 
   /**
-   * Creates an RestFileDataSourceOptions from a CaseInsensitiveStringMap.
+   * Creates a [[RemoteFileDataSourceOptions]] from a CaseInsensitiveStringMap.
    *
    * Supports duration parsing for time-based options:
    *  - "10s" → 10 seconds

@@ -9,7 +9,7 @@ class MockForExternalTestsRemoteFileClient extends RemoteFileClient {
   /**
    * Lists available log files from the remote endpoint.
    *
-   * @return sequence of RestFile representing available log files
+   * @return sequence of [[RemoteFile]] representing available log files
    */
   override def listLogFiles(): Seq[RemoteFile] = Seq(
     RemoteFile(name = "Log entry 1", fetchedAt = Timestamp.valueOf("2024-01-01 10:50:00")),

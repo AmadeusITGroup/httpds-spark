@@ -2,8 +2,6 @@ package com.amadeus.spark.datasource.remote.client
 
 import com.amadeus.spark.datasource.remote.conf.RemoteFileDataSourceOptions
 import org.apache.spark.internal.Logging
-import scala.language.existentials
-
 import scala.util.Try
 
 /**
@@ -14,7 +12,8 @@ trait RemoteFileClient extends RemoteFileClientRegister with Serializable with L
   /**
    * Initializes the client with the given options.
    *
-   * Override if the implementation class does not provide a constructor with RestFileDataSourceOptions.
+   * Override if the implementation class does not provide a constructor
+   * that accepts [[RemoteFileDataSourceOptions]].
    *
    * @param options configuration options for the client
    */
@@ -23,7 +22,7 @@ trait RemoteFileClient extends RemoteFileClientRegister with Serializable with L
   /**
    * Lists available log files from the remote endpoint.
    *
-   * @return sequence of RestFile representing available log files
+   * @return sequence of [[RemoteFile]] representing available log files
    */
   def listLogFiles(): Seq[RemoteFile]
 
@@ -63,23 +62,23 @@ trait RemoteFileClient extends RemoteFileClientRegister with Serializable with L
 object RemoteFileClient extends Logging {
 
   /**
-   * Creates and initializes the RestFileClient based on the configuration.
+   * Creates and initializes the [[RemoteFileClient]] based on the configuration.
    *
    * @param config configuration options
-   * @return initialized RestFileClient
+   * @return initialized [[RemoteFileClient]]
    */
   def from(config: RemoteFileDataSourceOptions): RemoteFileClient = {
     val clientClass          = ClientRegistry.lookupDataSource(config.remoteClient)
     val optionArgConstructor = Try(clientClass.getDeclaredConstructor(classOf[RemoteFileDataSourceOptions])).toOption
 
     if (optionArgConstructor.isDefined) {
-      logDebug("Instantiating remote file client with RestFileDataSourceOptions constructor")
+      logDebug("Instantiating remote file client with RemoteFileDataSourceOptions constructor")
       return optionArgConstructor.get
         .newInstance(config)
         .asInstanceOf[RemoteFileClient]
     }
 
-    logWarning(s"No constructor with RestFileDataSourceOptions found for ${config.remoteClient}, trying empty constructor")
+    logWarning(s"No constructor with RemoteFileDataSourceOptions found for ${config.remoteClient}, trying empty constructor")
     val client = clientClass.getDeclaredConstructor().newInstance().asInstanceOf[RemoteFileClient]
     client.init(config)
     client

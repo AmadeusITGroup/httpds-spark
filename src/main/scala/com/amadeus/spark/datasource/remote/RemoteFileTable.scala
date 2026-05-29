@@ -66,5 +66,5 @@ class RemoteFileTable(tableSchema: StructType, properties: util.Map[String, Stri
     new RemoteFileScanBuilder(tableSchema, mergedOptions)
   }
 
-  override def name(): String = s"RestFileTable(${config.serverUri})"
+  override def name(): String = s"RemoteFileTable(${config.serverUri})"
 }
