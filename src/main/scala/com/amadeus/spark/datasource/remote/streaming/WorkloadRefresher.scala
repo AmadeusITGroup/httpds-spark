@@ -186,7 +186,7 @@ object WorkloadRefresher {
    * @param freshFiles newly fetched files
    * @return merged list of [[RemoteFile]]
    */
-  private[WorkloadRefresher] def mergeFiles(oldFiles: Seq[RemoteFile], freshFiles: Seq[RemoteFile]): Seq[RemoteFile] = {
+  private[streaming] def mergeFiles(oldFiles: Seq[RemoteFile], freshFiles: Seq[RemoteFile]): Seq[RemoteFile] = {
     val freshFileNames = freshFiles.map(_.name).toSet
     val commonFiles    = oldFiles.filter(of => freshFileNames.contains(of.name))
     val combinedFiles  = commonFiles ++ freshFiles

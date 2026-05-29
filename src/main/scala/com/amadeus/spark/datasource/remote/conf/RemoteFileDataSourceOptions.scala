@@ -117,7 +117,7 @@ case class RemoteFileDataSourceOptions(
    * Sensitive values (API keys, passwords) are masked.
    */
   def toLogString: String = {
-    s"""HTTP DataSource Configuration:
+    s"""Remote File DataSource Configuration:
        |  restClientClass = $remoteClient
        |  uri             = $serverUri
        |  pollInterval    = ${pollingInterval.toString}
