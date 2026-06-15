@@ -86,6 +86,9 @@ releaseProcess := Seq[ReleaseStep](
   pushChanges
 )
 
+releaseCommitMessage     := s"chore(release): set version to ${(ThisBuild / version).value} [skip ci]"
+releaseNextCommitMessage := s"chore(release): bump version to ${(ThisBuild / version).value} [skip ci]"
+
 // Global GitHub Packages settings
 ThisBuild / credentials += Credentials(
   "GitHub Package Registry",
