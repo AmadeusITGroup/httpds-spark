@@ -3,6 +3,7 @@ package com.amadeus.spark.datasource.remote.client
 import com.amadeus.spark.datasource.remote.conf.RemoteFileDataSourceOptions
 import org.apache.spark.internal.Logging
 import scala.util.Try
+import scala.language.existentials
 
 /**
  * Client interface for interacting with remote-based file sources.
