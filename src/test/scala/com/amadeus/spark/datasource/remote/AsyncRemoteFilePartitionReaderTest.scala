@@ -216,6 +216,29 @@ class AsyncRemoteFilePartitionReaderTest extends AnyFunSpec with Matchers {
 
   describe("close()") {
 
+    it("is idempotent when called again after the reader self-closed on completion") {
+      // Real Spark lifecycle: the async reader closes itself proactively once all files are
+      // processed (inside next()), and Spark then calls close() again at task completion.
+      val partition = RemoteFileInputPartition(Seq("a.log", "b.log"))
+      val client = new StubAsyncClient(
+        Map(
+          "a.log" -> DownloadSuccess(Iterator(makeRawLine()), DownloadMetrics(1, 50L)),
+          "b.log" -> DownloadSuccess(Iterator(makeRawLine()), DownloadMetrics(1, 75L))
+        )
+      )
+      val reader = new AsyncRemoteFilePartitionReader(RemoteFileFormat.SCHEMA, partition, defaultOptions, client)
+
+      // Drain the partition. The final next() == false triggers the proactive close() (#1).
+      reader.next() shouldBe true
+      reader.next() shouldBe true
+      reader.next() shouldBe false
+
+      // Spark calls close() again at task completion (#2) - must not throw.
+      noException should be thrownBy reader.close()
+
+      client.closed shouldBe true
+    }
+
     it("cancels pending downloads and releases completed ones on close") {
       val line      = makeRawLine()
       val partition = RemoteFileInputPartition(Seq("fast.log", "slow.log"))

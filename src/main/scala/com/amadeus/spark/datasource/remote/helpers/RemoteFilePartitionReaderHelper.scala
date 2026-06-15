@@ -39,6 +39,9 @@ abstract class RemoteFilePartitionReaderHelper(schema: StructType, partition: Re
   /** List of failed files for logging. */
   protected val failedFiles: mutable.ListBuffer[String] = mutable.ListBuffer.empty
 
+  /** Guards against running the close logic more than once. */
+  @volatile private var isClosed: Boolean = false
+
   /**
    * Advances to the next record.
    *
@@ -135,8 +138,18 @@ abstract class RemoteFilePartitionReaderHelper(schema: StructType, partition: Re
 
   /**
    * Closes the reader
+   *
+   * Idempotent: the async reader closes itself proactively when all files are processed and
+   * Spark also calls close() at task completion, so this method may be invoked more than once.
    */
   override def close(): Unit = {
+
+    // Make close() idempotent - return early if already closed
+    if (isClosed) {
+      logDebug(s"[PARTITION-$partition] close() already called, skipping")
+      return
+    }
+    isClosed = true
 
     if (filesFailed > 0) {
       logWarning(s"[PARTITION-$partition]   ✗ Failed files: ${failedFiles.mkString(", ")}")
