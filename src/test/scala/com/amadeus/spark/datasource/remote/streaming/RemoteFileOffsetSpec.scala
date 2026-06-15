@@ -11,10 +11,10 @@ class RemoteFileOffsetSpec extends AnyFunSpec with Matchers {
   describe("RemoteFileOffset") {
 
     it("should serialize and deserialize offset to/from JSON") {
-      val files = Set("file1.log", "file2.log", "file3.log")
+      val files  = Set("file1.log", "file2.log", "file3.log")
       val offset = RemoteFileOffset.fromFiles(files)
 
-      val json = offset.json()
+      val json         = offset.json()
       val deserialized = RemoteFileOffset.fromJson(json)
 
       deserialized.indexFiles should equal(files)
@@ -48,7 +48,7 @@ class RemoteFileOffsetSpec extends AnyFunSpec with Matchers {
     describe("offset equality") {
 
       it("should be equal when file lists are identical regardless of createdAt") {
-        val files = Set("file1.log", "file2.log", "file3.log")
+        val files   = Set("file1.log", "file2.log", "file3.log")
         val offset1 = RemoteFileOffset(files, 1000L)
         val offset2 = RemoteFileOffset(files, 2000L)
 
@@ -71,7 +71,7 @@ class RemoteFileOffsetSpec extends AnyFunSpec with Matchers {
       }
 
       it("should maintain equality after serialization/deserialization") {
-        val files = Set("file1.log", "file2.log")
+        val files   = Set("file1.log", "file2.log")
         val offset1 = RemoteFileOffset(files, 1000L)
         val offset2 = RemoteFileOffset(files, 2000L)
 
@@ -88,11 +88,11 @@ class RemoteFileOffsetSpec extends AnyFunSpec with Matchers {
     describe("serialization/deserialization") {
 
       it("should preserve all content through round-trip serialization") {
-        val files = Set("file1.log", "file2.log", "file3.log", "file4.log")
+        val files     = Set("file1.log", "file2.log", "file3.log", "file4.log")
         val createdAt = 1234567890L
-        val offset = RemoteFileOffset(files, createdAt)
+        val offset    = RemoteFileOffset(files, createdAt)
 
-        val json = offset.json()
+        val json         = offset.json()
         val deserialized = RemoteFileOffset.fromJson(json)
 
         deserialized.indexFiles should equal(offset.indexFiles)
@@ -102,7 +102,7 @@ class RemoteFileOffsetSpec extends AnyFunSpec with Matchers {
       it("should preserve empty set through round-trip serialization") {
         val offset = RemoteFileOffset(Set.empty, 9876543210L)
 
-        val json = offset.json()
+        val json         = offset.json()
         val deserialized = RemoteFileOffset.fromJson(json)
 
         deserialized.indexFiles shouldBe empty
@@ -110,10 +110,10 @@ class RemoteFileOffsetSpec extends AnyFunSpec with Matchers {
       }
 
       it("should preserve large file sets through round-trip serialization") {
-        val files = (1 to 1000).map(i => s"file$i.log").toSet
+        val files  = (1 to 1000).map(i => s"file$i.log").toSet
         val offset = RemoteFileOffset(files, System.currentTimeMillis())
 
-        val json = offset.json()
+        val json         = offset.json()
         val deserialized = RemoteFileOffset.fromJson(json)
 
         deserialized.indexFiles should equal(offset.indexFiles)
@@ -130,7 +130,7 @@ class RemoteFileOffsetSpec extends AnyFunSpec with Matchers {
         )
         val offset = RemoteFileOffset(files, 1000L)
 
-        val json = offset.json()
+        val json         = offset.json()
         val deserialized = RemoteFileOffset.fromJson(json)
 
         deserialized.indexFiles should equal(offset.indexFiles)
@@ -142,10 +142,10 @@ class RemoteFileOffsetSpec extends AnyFunSpec with Matchers {
 
       it("should give same result when start offset is deserialized") {
         val startFiles = Set("file1.log", "file2.log")
-        val endFiles = Set("file1.log", "file2.log", "file3.log", "file4.log")
+        val endFiles   = Set("file1.log", "file2.log", "file3.log", "file4.log")
 
         val startOffset = RemoteFileOffset.fromFiles(startFiles)
-        val endOffset = RemoteFileOffset.fromFiles(endFiles)
+        val endOffset   = RemoteFileOffset.fromFiles(endFiles)
 
         // Deserialize start offset
         val startDeserialized = RemoteFileOffset.fromJson(startOffset.json())
@@ -159,10 +159,10 @@ class RemoteFileOffsetSpec extends AnyFunSpec with Matchers {
 
       it("should give same result when end offset is deserialized") {
         val startFiles = Set("file1.log", "file2.log")
-        val endFiles = Set("file1.log", "file2.log", "file3.log", "file4.log")
+        val endFiles   = Set("file1.log", "file2.log", "file3.log", "file4.log")
 
         val startOffset = RemoteFileOffset.fromFiles(startFiles)
-        val endOffset = RemoteFileOffset.fromFiles(endFiles)
+        val endOffset   = RemoteFileOffset.fromFiles(endFiles)
 
         // Deserialize end offset
         val endDeserialized = RemoteFileOffset.fromJson(endOffset.json())
@@ -176,14 +176,14 @@ class RemoteFileOffsetSpec extends AnyFunSpec with Matchers {
 
       it("should give same result when both offsets are deserialized") {
         val startFiles = Set("file1.log", "file2.log")
-        val endFiles = Set("file1.log", "file2.log", "file3.log", "file4.log", "file5.log")
+        val endFiles   = Set("file1.log", "file2.log", "file3.log", "file4.log", "file5.log")
 
         val startOffset = RemoteFileOffset.fromFiles(startFiles)
-        val endOffset = RemoteFileOffset.fromFiles(endFiles)
+        val endOffset   = RemoteFileOffset.fromFiles(endFiles)
 
         // Deserialize both offsets
         val startDeserialized = RemoteFileOffset.fromJson(startOffset.json())
-        val endDeserialized = RemoteFileOffset.fromJson(endOffset.json())
+        val endDeserialized   = RemoteFileOffset.fromJson(endOffset.json())
 
         val result1 = startOffset.filesBetween(endOffset)
         val result2 = startDeserialized.filesBetween(endDeserialized)
@@ -198,8 +198,8 @@ class RemoteFileOffsetSpec extends AnyFunSpec with Matchers {
 
         val startOffset1 = RemoteFileOffset(files1, 1000L)
         val startOffset2 = RemoteFileOffset(files1, 2000L)
-        val endOffset1 = RemoteFileOffset(files2, 3000L)
-        val endOffset2 = RemoteFileOffset(files2, 4000L)
+        val endOffset1   = RemoteFileOffset(files2, 3000L)
+        val endOffset2   = RemoteFileOffset(files2, 4000L)
 
         val result1 = startOffset1.filesBetween(endOffset1)
         val result2 = startOffset2.filesBetween(endOffset2)
@@ -213,7 +213,7 @@ class RemoteFileOffsetSpec extends AnyFunSpec with Matchers {
 
         val startOffset1 = RemoteFileOffset.INITIAL
         val startOffset2 = RemoteFileOffset.fromFiles(Set.empty)
-        val endOffset = RemoteFileOffset.fromFiles(endFiles)
+        val endOffset    = RemoteFileOffset.fromFiles(endFiles)
 
         val result1 = startOffset1.filesBetween(endOffset)
         val result2 = startOffset2.filesBetween(endOffset)
@@ -226,8 +226,8 @@ class RemoteFileOffsetSpec extends AnyFunSpec with Matchers {
         val startFiles = Set("file1.log", "file2.log")
 
         val startOffset = RemoteFileOffset.fromFiles(startFiles)
-        val endOffset1 = RemoteFileOffset.INITIAL
-        val endOffset2 = RemoteFileOffset.fromFiles(Set.empty)
+        val endOffset1  = RemoteFileOffset.INITIAL
+        val endOffset2  = RemoteFileOffset.fromFiles(Set.empty)
 
         val result1 = startOffset.filesBetween(endOffset1)
         val result2 = startOffset.filesBetween(endOffset2)
@@ -238,10 +238,10 @@ class RemoteFileOffsetSpec extends AnyFunSpec with Matchers {
 
       it("should give same result with multiple serialization/deserialization cycles") {
         val startFiles = Set("file1.log", "file2.log")
-        val endFiles = Set("file1.log", "file2.log", "file3.log", "file4.log")
+        val endFiles   = Set("file1.log", "file2.log", "file3.log", "file4.log")
 
         val startOffset = RemoteFileOffset.fromFiles(startFiles)
-        val endOffset = RemoteFileOffset.fromFiles(endFiles)
+        val endOffset   = RemoteFileOffset.fromFiles(endFiles)
 
         // Multiple serialization cycles
         val startCycle1 = RemoteFileOffset.fromJson(startOffset.json())

@@ -53,4 +53,3 @@ class MinRecordsThroughputMetricTest extends AnyFunSpec with Matchers {
     }
   }
 }
-

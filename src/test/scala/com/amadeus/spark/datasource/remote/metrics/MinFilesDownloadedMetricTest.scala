@@ -47,4 +47,3 @@ class MinFilesDownloadedMetricTest extends AnyFunSpec with Matchers {
     }
   }
 }
-

@@ -1,0 +1,55 @@
+name: "Quality Gates"
+
+on:
+  workflow_call:
+    inputs:
+      artifact-name:
+        description: "Name under which the built JAR artifact is uploaded"
+        type: string
+        default: "release-artefacts"
+    outputs:
+      artifact-name:
+        description: "Echo of the artifact name, so callers can reference it in needs"
+        value: ${{ jobs.build.outputs.artifact-name }}
+
+permissions:
+  contents: read
+  checks: write
+
+jobs:
+  build:
+    name: "Quality Gates"
+    runs-on: ubuntu-latest
+    outputs:
+      artifact-name: ${{ inputs.artifact-name }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup-sbt
+        with:
+          java-version: "11"
+          sbt-runner-version: "1.12.12"
+
+      - name: "Scalafmt check"
+        run: sbt scalafmtCheck
+
+      - name: "Compile"
+        run: sbt clean compile
+
+      - name: "Coverage test"
+        run: sbt coverage test
+
+      - name: "Coverage report"
+        run: sbt coverageReport
+
+      - name: "Package"
+        run: sbt package
+
+      - name: "Tar JAR artifacts"
+        run: tar cf artefacts.tar target/scala-*/*.jar
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.artifact-name }}
+          path: artefacts.tar

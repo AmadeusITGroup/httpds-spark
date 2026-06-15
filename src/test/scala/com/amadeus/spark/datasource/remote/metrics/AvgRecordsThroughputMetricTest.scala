@@ -47,4 +47,3 @@ class AvgRecordsThroughputMetricTest extends AnyFunSpec with Matchers {
     }
   }
 }
-

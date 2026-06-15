@@ -36,7 +36,7 @@ This project follows the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.
 |--------------|---------|
 | Java (JDK)   | 11+     |
 | Scala        | 2.12    |
-| sbt          | 1.10+   |
+| sbt          | 1.12+   |
 | Apache Spark | 3.5.x   |
 | Git          | 2.x+    |
 

@@ -47,4 +47,3 @@ class MaxBytesThroughputMetricTest extends AnyFunSpec with Matchers {
     }
   }
 }
-

@@ -53,4 +53,3 @@ class TotalBytesDownloadedMetricTest extends AnyFunSpec with Matchers {
     }
   }
 }
-

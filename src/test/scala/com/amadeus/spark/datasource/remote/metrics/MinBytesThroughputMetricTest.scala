@@ -47,4 +47,3 @@ class MinBytesThroughputMetricTest extends AnyFunSpec with Matchers {
     }
   }
 }
-

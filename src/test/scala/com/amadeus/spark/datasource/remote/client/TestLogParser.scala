@@ -29,7 +29,7 @@ object TestLogParser {
   def parse(fileBytes: Array[Byte]): ParseResult = {
     Try {
       val jsonString = new String(fileBytes, "UTF-8")
-      val json = org.json4s.jackson.JsonMethods.parse(jsonString)
+      val json       = org.json4s.jackson.JsonMethods.parse(jsonString)
 
       val metadata = json \ "metadata" match {
         case JString(s) => Some(s)
@@ -37,7 +37,7 @@ object TestLogParser {
       }
 
       // Remove metadata field; remaining JSON becomes logContent
-      val contentJson = json.removeField { case (name, _) => name == "metadata" }
+      val contentJson  = json.removeField { case (name, _) => name == "metadata" }
       val contentBytes = compact(render(contentJson)).getBytes("UTF-8")
 
       ParseResult(

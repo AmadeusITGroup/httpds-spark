@@ -47,4 +47,3 @@ class StartOffsetsTest extends AnyFunSpec with Matchers {
     }
   }
 }
-

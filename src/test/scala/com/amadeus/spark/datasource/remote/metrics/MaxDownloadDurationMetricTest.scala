@@ -47,4 +47,3 @@ class MaxDownloadDurationMetricTest extends AnyFunSpec with Matchers {
     }
   }
 }
-

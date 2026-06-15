@@ -47,4 +47,3 @@ class MaxFilesDownloadedMetricTest extends AnyFunSpec with Matchers {
     }
   }
 }
-

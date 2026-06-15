@@ -55,7 +55,7 @@ df.show()
 | Java         | 11+     |
 | Scala        | 2.12    |
 | Apache Spark | 3.5.x   |
-| sbt          | 1.10+   |
+| sbt          | 1.12+   |
 
 ### Build the JAR
 

@@ -53,4 +53,3 @@ class MaxRecordsThroughputMetricTest extends AnyFunSpec with Matchers {
     }
   }
 }
-

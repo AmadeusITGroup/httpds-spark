@@ -14,15 +14,15 @@ import java.sql.Timestamp
 class RawFileLineTest extends AnyFunSpec with Matchers {
 
   // Test fixture data
-  val testTimestamp = new Timestamp(1609459200000L) // 2021-01-01 00:00:00
-  val testFileName  = "test-file.log"
+  val testTimestamp   = new Timestamp(1609459200000L)             // 2021-01-01 00:00:00
+  val testFileName    = "test-file.log"
   val testLogMetadata = """{"accountId":1147454,"configId":3088,"format":"LEEF"}"""
-  val testLogContent = Array[Byte](0x48, 0x65, 0x6c, 0x6c, 0x6f) // "Hello"
-  val testRawBinary = Array[Byte](0x01, 0x02, 0x03)
-  val testError     = "Download failed: HTTP 500"
+  val testLogContent  = Array[Byte](0x48, 0x65, 0x6c, 0x6c, 0x6f) // "Hello"
+  val testRawBinary   = Array[Byte](0x01, 0x02, 0x03)
+  val testError       = "Download failed: HTTP 500"
 
   // Remote file with HTTP metadata
-  val remoteFile    = RemoteFile(
+  val remoteFile = RemoteFile(
     name = testFileName,
     fetchedAt = testTimestamp,
     fileSize = Some(12345L),
@@ -130,8 +130,8 @@ class RawFileLineTest extends AnyFunSpec with Matchers {
 
       it("should convert RawFileLine with minimal metadata to InternalRow") {
         val minimalRemoteFile = RemoteFile(name = testFileName, fetchedAt = testTimestamp)
-        val rawFileLine = RawFileLine(minimalRemoteFile, downloadTimestamp = testTimestamp)
-        val row         = rawFileLine.toInternalRow(RemoteFileFormat.SCHEMA)
+        val rawFileLine       = RawFileLine(minimalRemoteFile, downloadTimestamp = testTimestamp)
+        val row               = rawFileLine.toInternalRow(RemoteFileFormat.SCHEMA)
 
         row should not be null
         row.numFields shouldBe 6
@@ -175,8 +175,8 @@ class RawFileLineTest extends AnyFunSpec with Matchers {
       }
 
       it("should handle different download and fetch timestamps") {
-        val fetchTime = new Timestamp(1609459200000L)
-        val downloadTime = new Timestamp(1640995200000L)
+        val fetchTime         = new Timestamp(1609459200000L)
+        val downloadTime      = new Timestamp(1640995200000L)
         val fileWithFetchTime = RemoteFile(name = "test.log", fetchedAt = fetchTime)
         val rawFileLine = RawFileLine(
           sourceFileMetadata = fileWithFetchTime,
@@ -297,10 +297,10 @@ class RawFileLineTest extends AnyFunSpec with Matchers {
       }
 
       it("should handle null optional HTTP metadata fields") {
-        val file = RemoteFile(name = "test.log", fetchedAt = testTimestamp)
+        val file        = RemoteFile(name = "test.log", fetchedAt = testTimestamp)
         val rawFileLine = RawFileLine(file, downloadTimestamp = testTimestamp)
 
-        val row = rawFileLine.toInternalRow(RemoteFileFormat.SCHEMA)
+        val row              = rawFileLine.toInternalRow(RemoteFileFormat.SCHEMA)
         val sourceFileStruct = row.getStruct(0, 6)
 
         // Required fields should have values
