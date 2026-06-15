@@ -269,7 +269,8 @@ class RemoteMicroBatchStream(schema: StructType, options: CaseInsensitiveStringM
     // Create one partition per file for parallel downloading
     // We can also group files into partitions if there are too many small files
     val numPartitions = math.min(filesToProcess.size, config.numPartitions)
-    val partitions    = createPartitions(numPartitions, filesToProcess.toSeq)
+    // filesToProcess is an unordered Set, so sort by name for a deterministic partition layout across re-planning.
+    val partitions    = createPartitions(numPartitions, filesToProcess.toSeq, sortByName = true)
 
     partitions.asInstanceOf[Array[InputPartition]]
   }
