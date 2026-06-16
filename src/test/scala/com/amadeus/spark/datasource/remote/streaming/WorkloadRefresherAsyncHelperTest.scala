@@ -26,9 +26,12 @@ class WorkloadRefresherAsyncHelperTest extends AnyFunSpec with Matchers {
 
   /** Concrete implementation of the trait under test */
   class TestHelper(initialFiles: Seq[RemoteFile] = Seq.empty) extends WorkloadRefresherAsyncHelper {
+    // Mutable state required for tracking test helper file list and merge call counts
+    // scalafix:off DisableSyntax.var
     private var _files: Seq[RemoteFile]  = initialFiles
     var mergeCallCount: Int              = 0
     var lastMergedFiles: Seq[RemoteFile] = Seq.empty
+    // scalafix:on DisableSyntax.var
 
     override protected def discoveredFiles: Seq[RemoteFile] = _files
 
@@ -182,7 +185,10 @@ class WorkloadRefresherAsyncHelperTest extends AnyFunSpec with Matchers {
 
 /** A minimal AsyncRemoteFileClient stub */
 class StubAsyncClient(filesToReturn: Seq[RemoteFile]) extends AsyncRemoteFileClient {
+  // Mutable flag required for test stub tracking of async init call
+  // scalafix:off DisableSyntax.var
   var initAsyncCalled = false
+  // scalafix:on DisableSyntax.var
 
   override def initAsync(executionContext: ExecutionContext, httpClient: HttpClient): Unit =
     initAsyncCalled = true

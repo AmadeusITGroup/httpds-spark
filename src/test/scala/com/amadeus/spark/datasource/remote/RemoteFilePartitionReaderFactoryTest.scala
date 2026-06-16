@@ -8,6 +8,8 @@ import org.scalatest.matchers.should.Matchers
 
 import java.util
 
+// Spark/Java API reflection tests require asInstanceOf casts for type-erased Java generics
+// scalafix:off DisableSyntax.asInstanceOf
 class RemoteFilePartitionReaderFactoryTest extends AnyFunSpec with Matchers {
 
   private val schema = RemoteFileFormat.SCHEMA
@@ -24,7 +26,10 @@ class RemoteFilePartitionReaderFactoryTest extends AnyFunSpec with Matchers {
   private def getField[T](obj: AnyRef, fieldName: String): T = {
     val fields = Iterator
       .iterate[Class[_]](obj.getClass)(_.getSuperclass)
+      // Java reflection Class.getSuperclass() returns null at root — required Java interop
+      // scalafix:off DisableSyntax.null
       .takeWhile(_ != null)
+      // scalafix:on DisableSyntax.null
       .flatMap(_.getDeclaredFields)
     val field = fields
       .find(_.getName.endsWith(fieldName))
@@ -76,3 +81,5 @@ class RemoteFilePartitionReaderFactoryTest extends AnyFunSpec with Matchers {
     }
   }
 }
+
+// scalafix:on DisableSyntax.asInstanceOf

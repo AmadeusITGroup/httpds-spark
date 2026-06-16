@@ -12,6 +12,8 @@ trait MetricsHelper {
   private val startTimeMs: Long = System.currentTimeMillis()
 
   /** Number of records read. */
+  // Mutable accumulator required for streaming metrics tracking
+  // scalafix:off DisableSyntax.var
   protected var recordsRead: Long = 0
 
   /** Total bytes downloaded across all files. */
@@ -19,6 +21,7 @@ trait MetricsHelper {
 
   /** Number of files processed. */
   protected var filesProcessed: Int = 0
+  // scalafix:on DisableSyntax.var
 
   protected def buildMetrics(): Array[CustomTaskMetric] = {
     val durationMs    = System.currentTimeMillis() - startTimeMs

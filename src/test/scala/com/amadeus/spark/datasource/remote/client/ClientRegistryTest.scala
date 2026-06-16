@@ -6,6 +6,8 @@ import org.scalatest.matchers.should.Matchers
 /**
  * Unit tests for ClientRegistry.
  */
+// ScalaTest assertions and Java API checks require null comparisons — Java interop test patterns
+// scalafix:off DisableSyntax.null
 class ClientRegistryTest extends AnyFunSpec with Matchers {
 
   describe("lookupDataSource") {
@@ -17,12 +19,6 @@ class ClientRegistryTest extends AnyFunSpec with Matchers {
         clientClass should not be null
         clientClass.getName shouldBe "com.amadeus.spark.datasource.remote.client.MockRemoteFileClient"
       }
-
-      //it("should find client by short name 'imperva'") {
-      //  val clientClass = ClientRegistry.lookupDataSource("imperva")
-      //  clientClass should not be null
-      //  clientClass.getName shouldBe "com.imperva.spark.datasource.client.IncapsulaClient"
-      //}
 
       it("should be case-insensitive when looking up by short name") {
         val clientClass1 = ClientRegistry.lookupDataSource("MOCK")
@@ -85,3 +81,4 @@ class ClientRegistryTest extends AnyFunSpec with Matchers {
     }
   }
 }
+// scalafix:on DisableSyntax.null

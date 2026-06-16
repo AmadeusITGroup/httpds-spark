@@ -35,8 +35,10 @@ class RemoteFilePartitionReaderFactory(schema: StructType, options: CaseInsensit
    * @return a partition reader for reading data from the partition
    */
   override def createReader(partition: InputPartition): PartitionReader[InternalRow] = {
+    // scalafix:off DisableSyntax.asInstanceOf
     val restFilePartition = partition.asInstanceOf[RemoteFileInputPartition]
-    val parsedOptions     = RemoteFileDataSourceOptions.fromMap(optionsMap)
+    // scalafix:on DisableSyntax.asInstanceOf
+    val parsedOptions = RemoteFileDataSourceOptions.fromMap(optionsMap)
 
     // Choose reader based on async downloads configuration
     if (parsedOptions.asyncDownloads) {
@@ -48,7 +50,7 @@ class RemoteFilePartitionReaderFactory(schema: StructType, options: CaseInsensit
       )
 
     } else {
-      logDebug(s"[READER-FACTORY] Creating standard RemoteFilePartitionReader for partition ${restFilePartition}")
+      logDebug(s"[READER-FACTORY] Creating standard RemoteFilePartitionReader for partition $restFilePartition")
       new RemoteFilePartitionReader(
         schema = schema,
         partition = restFilePartition,

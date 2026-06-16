@@ -2,11 +2,11 @@ package com.amadeus.spark.datasource.remote.client
 
 import com.amadeus.spark.datasource.remote.RemoteFileFormat
 import org.apache.spark.sql.catalyst.InternalRow
-
-import java.sql.Timestamp
 import org.apache.spark.sql.catalyst.expressions.GenericInternalRow
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.unsafe.types.UTF8String
+
+import java.sql.Timestamp
 
 /**
  * Represents a complete log file with metadata and content.
@@ -53,6 +53,8 @@ case class RawFileLine(
     val values = new Array[Any](schema.fields.length)
 
     schema.fields.zipWithIndex.foreach { case (field, idx) =>
+      // Spark InternalRow API uses null for absent/unknown field values — required for Java interop
+      // scalafix:off DisableSyntax.null
       val value: Any = field.name match {
         case RemoteFileFormat.SOURCE_FILE =>
           // Handle sourceFile struct field
@@ -67,6 +69,7 @@ case class RawFileLine(
         case RemoteFileFormat.ERROR              => error.map(UTF8String.fromString).orNull
         case _                                   => null
       }
+      // scalafix:on DisableSyntax.null
       values(idx) = value
     }
 
@@ -84,6 +87,8 @@ case class RawFileLine(
     val structValues = new Array[Any](structType.fields.length)
 
     structType.fields.zipWithIndex.foreach { case (field, idx) =>
+      // Spark InternalRow API uses null for absent/unknown field values — required for Java interop
+      // scalafix:off DisableSyntax.null
       val value: Any = field.name match {
         case RemoteFileFormat.SOURCE_FILE_NAME          => UTF8String.fromString(sourceFileMetadata.name)
         case RemoteFileFormat.SOURCE_FILE_FETCHED_AT    => sourceFileMetadata.fetchedAt.getTime * 1000L // Convert to microseconds
@@ -93,6 +98,7 @@ case class RawFileLine(
         case RemoteFileFormat.SOURCE_FILE_REQUEST_ID    => sourceFileMetadata.requestId.map(UTF8String.fromString).orNull
         case _                                          => null
       }
+      // scalafix:on DisableSyntax.null
       structValues(idx) = value
     }
 

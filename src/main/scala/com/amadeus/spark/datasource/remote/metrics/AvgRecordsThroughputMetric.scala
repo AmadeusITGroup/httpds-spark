@@ -29,10 +29,10 @@ class AvgRecordsThroughputMetric extends CustomMetric {
    */
   override def aggregateTaskMetrics(taskMetrics: Array[Long]): String = {
     if (taskMetrics.isEmpty) {
-      return NA
+      NA
+    } else {
+      val avgThroughput = taskMetrics.sum / taskMetrics.length
+      formatRecordThroughput(avgThroughput)
     }
-
-    val avgThroughput = taskMetrics.sum / taskMetrics.length
-    formatRecordThroughput(avgThroughput)
   }
 }

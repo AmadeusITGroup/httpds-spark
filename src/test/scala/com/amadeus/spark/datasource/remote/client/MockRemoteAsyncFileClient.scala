@@ -14,7 +14,10 @@ import scala.concurrent.{ExecutionContext, Future}
  */
 class MockRemoteAsyncFileClient extends AsyncRemoteFileClient {
 
+  // Mutable state required for mock client options tracking in tests
+  // scalafix:off DisableSyntax.var
   private[client] var options: RemoteFileDataSourceOptions = _
+  // scalafix:on DisableSyntax.var
 
   override def init(opts: RemoteFileDataSourceOptions): Unit = {
     this.options = opts
@@ -70,7 +73,7 @@ class MockRemoteAsyncFileClient extends AsyncRemoteFileClient {
    * Add a mock file for testing.
    */
   def addMockFile(filename: String, content: String): Unit = {
-    mockFiles.put(filename, content)
+    val _ = mockFiles.put(filename, content)
   }
 
   /**

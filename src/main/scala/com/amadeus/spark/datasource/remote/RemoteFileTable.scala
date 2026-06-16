@@ -7,8 +7,8 @@ import org.apache.spark.sql.connector.read.ScanBuilder
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.util.CaseInsensitiveStringMap
 
-import scala.collection.JavaConverters._
 import java.util
+import scala.collection.JavaConverters._
 
 /**
  * Table implementation for remote file data source.

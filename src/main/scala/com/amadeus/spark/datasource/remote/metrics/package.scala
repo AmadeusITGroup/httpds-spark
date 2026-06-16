@@ -12,10 +12,10 @@ package object metrics {
    */
   private[metrics] def formatDuration(durationMs: Long): String = {
     if (durationMs == 0) {
-      return "0 millisecond"
+      "0 millisecond"
+    } else {
+      Duration(s"$durationMs ms").toString
     }
-
-    Duration(s"$durationMs ms").toString
   }
 
   /**

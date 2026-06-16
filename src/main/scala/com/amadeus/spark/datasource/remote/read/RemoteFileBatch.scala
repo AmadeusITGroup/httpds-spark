@@ -42,7 +42,9 @@ class RemoteFileBatch(schema: StructType, options: CaseInsensitiveStringMap) ext
 
     if (files.isEmpty) {
       logWarning("No log files found on server")
+      // scalafix:off DisableSyntax.return
       return Array.empty
+      // scalafix:on DisableSyntax.return
     }
 
     val numPartitions = math.min(files.size, config.numPartitions)
@@ -51,7 +53,9 @@ class RemoteFileBatch(schema: StructType, options: CaseInsensitiveStringMap) ext
     val partitions = createPartitions(numPartitions, files.map(_.name))
 
     logDebug(s"Created ${partitions.length} input partitions")
+    // scalafix:off DisableSyntax.asInstanceOf
     partitions.asInstanceOf[Array[InputPartition]]
+    // scalafix:on DisableSyntax.asInstanceOf
   }
 
   /**

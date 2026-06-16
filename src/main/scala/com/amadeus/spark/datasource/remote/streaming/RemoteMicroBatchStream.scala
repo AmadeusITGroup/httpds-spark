@@ -30,12 +30,15 @@ class RemoteMicroBatchStream(schema: StructType, options: CaseInsensitiveStringM
 
   private lazy val workloadManager = new WorkloadRefresher(config)
 
+  // Volatile vars required for thread-safe streaming state; availableNowFileSnapshot uses default null sentinel
+  // scalafix:off DisableSyntax.var
   // Cache for "latest" mode initial offset
   @volatile private var cachedLatestModeInitialOffset: Option[RemoteFileOffset] = None
 
   // AvailableNow trigger state
   @volatile private var isTriggerAvailableNow: Boolean        = false
   @volatile private var availableNowFileSnapshot: Set[String] = _
+  // scalafix:on DisableSyntax.var
 
   // Validate streaming configuration
   private val config: RemoteFileDataSourceOptions = {
@@ -123,13 +126,15 @@ class RemoteMicroBatchStream(schema: StructType, options: CaseInsensitiveStringM
     val workload = retrieveFiles(readLimit, startOffset)
 
     if (workload.filesToProcess.isEmpty) {
-      return null
+      // Spark MicroBatchStream Java API requires returning null when no new data is available
+      // scalafix:off DisableSyntax.null
+      null
+      // scalafix:on DisableSyntax.null
+    } else {
+      val newOffset = RemoteFileOffset.fromFiles(workload.fullFileList)
+      logDebug(s"[STREAM-$instanceId]   Returning new offset: $newOffset")
+      newOffset
     }
-
-    val newOffset = RemoteFileOffset.fromFiles(workload.fullFileList)
-    logDebug(s"[STREAM-$instanceId]   Returning new offset: $newOffset")
-
-    newOffset
   }
 
   /**
@@ -189,6 +194,7 @@ class RemoteMicroBatchStream(schema: StructType, options: CaseInsensitiveStringM
     val processedFiles = startOffset.indexFiles
 
     // First call in AvailableNow mode - cache ALL available files
+    // Option() wraps the field whose default value is null (set via = _) to check initialization
     if (Option(availableNowFileSnapshot).isEmpty) {
       logDebug(s"[STREAM-$instanceId]   AvailableNow: First latestOffset call - discovering and caching all files")
       availableNowFileSnapshot = workloadManager.discoverAllFiles()
@@ -198,7 +204,9 @@ class RemoteMicroBatchStream(schema: StructType, options: CaseInsensitiveStringM
     val newFiles = availableNowFileSnapshot.diff(processedFiles)
 
     if (newFiles.isEmpty) {
+      // scalafix:off DisableSyntax.return
       return Workload(Seq.empty, processedFiles)
+      // scalafix:on DisableSyntax.return
     }
 
     // Apply rate limit to new files (sorted for deterministic ordering)
@@ -263,16 +271,20 @@ class RemoteMicroBatchStream(schema: StructType, options: CaseInsensitiveStringM
     val filesToProcess = startOffset.filesBetween(endOffset)
 
     if (filesToProcess.isEmpty) {
+      // scalafix:off DisableSyntax.return
       return Array.empty
+      // scalafix:on DisableSyntax.return
     }
 
     // Create one partition per file for parallel downloading
     // We can also group files into partitions if there are too many small files
     val numPartitions = math.min(filesToProcess.size, config.numPartitions)
     // filesToProcess is an unordered Set, so sort by name for a deterministic partition layout across re-planning.
-    val partitions    = createPartitions(numPartitions, filesToProcess.toSeq, sortByName = true)
+    val partitions = createPartitions(numPartitions, filesToProcess.toSeq, sortByName = true)
 
+    // scalafix:off DisableSyntax.asInstanceOf
     partitions.asInstanceOf[Array[InputPartition]]
+    // scalafix:on DisableSyntax.asInstanceOf
   }
 
   /**
@@ -307,9 +319,12 @@ class RemoteMicroBatchStream(schema: StructType, options: CaseInsensitiveStringM
 
     if (isTriggerAvailableNow) {
       // Reset AvailableNow state
+      // Spark AvailableNow trigger uses null sentinel for uninitialized snapshot — required for Java interop
+      // scalafix:off DisableSyntax.null
       logDebug(s"[STREAM-$instanceId]   Clearing AvailableNow cached snapshot (${if (availableNowFileSnapshot != null) availableNowFileSnapshot.size else 0} files)")
 
       availableNowFileSnapshot = null
+      // scalafix:on DisableSyntax.null
       isTriggerAvailableNow = false
     }
 

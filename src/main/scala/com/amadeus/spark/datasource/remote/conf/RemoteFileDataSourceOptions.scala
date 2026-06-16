@@ -77,7 +77,7 @@ case class RemoteFileDataSourceOptions(
    */
   private def validateUriFormat(): Unit = {
     try {
-      new URI(serverUri)
+      val _ = new URI(serverUri)
     } catch {
       case e: Exception => throw new IllegalArgumentException(s"'${RemoteFileDataSourceOptions.URI}' is not a valid URI: $serverUri", e)
     }

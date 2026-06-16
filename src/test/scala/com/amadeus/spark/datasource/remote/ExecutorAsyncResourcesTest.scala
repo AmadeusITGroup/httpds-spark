@@ -1,17 +1,21 @@
 package com.amadeus.spark.datasource.remote
 
+import org.scalatest.BeforeAndAfterEach
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
-import org.scalatest.BeforeAndAfterEach
 
 import java.net.http.HttpClient
-import java.util.{HashMap => JHashMap}
 import java.util.concurrent.ThreadPoolExecutor
+import java.util.{HashMap => JHashMap}
 import scala.concurrent.ExecutionContext
 
 /**
  * Unit tests for ExecutorAsyncResources.
  */
+// ScalaTest assertions and Java API checks require null comparisons — Java interop test patterns
+// scalafix:off DisableSyntax.null
+// Spark/Java API reflection tests require asInstanceOf casts for type-erased Java generics
+// scalafix:off DisableSyntax.asInstanceOf
 class ExecutorAsyncResourcesTest extends AnyFunSpec with Matchers with BeforeAndAfterEach {
 
   override def afterEach(): Unit = {
@@ -110,3 +114,5 @@ class ExecutorAsyncResourcesTest extends AnyFunSpec with Matchers with BeforeAnd
     }
   }
 }
+// scalafix:on DisableSyntax.asInstanceOf
+// scalafix:on DisableSyntax.null

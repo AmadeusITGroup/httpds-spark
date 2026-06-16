@@ -27,11 +27,11 @@ class AvgDownloadDurationMetric extends CustomMetric {
    */
   override def aggregateTaskMetrics(taskMetrics: Array[Long]): String = {
     if (taskMetrics.isEmpty) {
-      return NA
+      NA
+    } else {
+      val avgDurationMs = taskMetrics.sum / taskMetrics.length
+      formatDuration(avgDurationMs)
     }
-
-    val avgDurationMs = taskMetrics.sum / taskMetrics.length
-    formatDuration(avgDurationMs)
   }
 
 }

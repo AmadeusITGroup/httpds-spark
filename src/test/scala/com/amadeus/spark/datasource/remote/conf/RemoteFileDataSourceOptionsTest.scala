@@ -3,8 +3,8 @@ package com.amadeus.spark.datasource.remote.conf
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 
-import scala.concurrent.duration.{Duration, MILLISECONDS, SECONDS, MINUTES}
 import scala.collection.JavaConverters._
+import scala.concurrent.duration.{Duration, MILLISECONDS, MINUTES, SECONDS}
 
 /**
  * Unit tests for RemoteFileDataSourceOptions.

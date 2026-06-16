@@ -2,8 +2,9 @@ package com.amadeus.spark.datasource.remote.client
 
 import com.amadeus.spark.datasource.remote.conf.RemoteFileDataSourceOptions
 import org.apache.spark.internal.Logging
-import scala.util.Try
+
 import scala.language.existentials
+import scala.util.Try
 
 /**
  * Client interface for interacting with remote-based file sources.
@@ -18,7 +19,7 @@ trait RemoteFileClient extends RemoteFileClientRegister with Serializable with L
    *
    * @param options configuration options for the client
    */
-  def init(options: RemoteFileDataSourceOptions): Unit = {}
+  def init(options: RemoteFileDataSourceOptions): Unit = { val _ = options }
 
   /**
    * Lists available log files from the remote endpoint.
@@ -72,16 +73,19 @@ object RemoteFileClient extends Logging {
     val clientClass          = ClientRegistry.lookupDataSource(config.remoteClient)
     val optionArgConstructor = Try(clientClass.getDeclaredConstructor(classOf[RemoteFileDataSourceOptions])).toOption
 
-    if (optionArgConstructor.isDefined) {
-      logDebug("Instantiating remote file client with RemoteFileDataSourceOptions constructor")
-      return optionArgConstructor.get
-        .newInstance(config)
-        .asInstanceOf[RemoteFileClient]
+    optionArgConstructor match {
+      case Some(constructor) =>
+        logDebug("Instantiating remote file client with RemoteFileDataSourceOptions constructor")
+        // scalafix:off DisableSyntax.asInstanceOf
+        constructor.newInstance(config).asInstanceOf[RemoteFileClient]
+      // scalafix:on DisableSyntax.asInstanceOf
+      case None =>
+        logWarning(s"No constructor with RemoteFileDataSourceOptions found for ${config.remoteClient}, trying empty constructor")
+        // scalafix:off DisableSyntax.asInstanceOf
+        val client = clientClass.getDeclaredConstructor().newInstance().asInstanceOf[RemoteFileClient]
+        // scalafix:on DisableSyntax.asInstanceOf
+        client.init(config)
+        client
     }
-
-    logWarning(s"No constructor with RemoteFileDataSourceOptions found for ${config.remoteClient}, trying empty constructor")
-    val client = clientClass.getDeclaredConstructor().newInstance().asInstanceOf[RemoteFileClient]
-    client.init(config)
-    client
   }
 }

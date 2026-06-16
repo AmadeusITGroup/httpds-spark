@@ -28,6 +28,8 @@ import scala.util.control.NonFatal
 abstract class RemoteFilePartitionReaderHelper(schema: StructType, partition: RemoteFileInputPartition) extends PartitionReader[InternalRow] with MetricsHelper with Logging {
 
   /** Iterator over the current file's lines. */
+  // Mutable iteration state required for file-by-file partition reading
+  // scalafix:off DisableSyntax.var
   protected var currentIterator: Iterator[RawFileLine] = Iterator.empty
 
   /** Current row to return. */
@@ -35,12 +37,16 @@ abstract class RemoteFilePartitionReaderHelper(schema: StructType, partition: Re
 
   /** Number of files failed. */
   protected var filesFailed: Int = 0
+  // scalafix:on DisableSyntax.var
 
   /** List of failed files for logging. */
   protected val failedFiles: mutable.ListBuffer[String] = mutable.ListBuffer.empty
 
   /** Guards against running the close logic more than once. */
+  // Volatile var required for idempotent close() in async/sync reader
+  // scalafix:off DisableSyntax.var
   @volatile private var isClosed: Boolean = false
+  // scalafix:on DisableSyntax.var
 
   /**
    * Advances to the next record.
@@ -56,7 +62,9 @@ abstract class RemoteFilePartitionReaderHelper(schema: StructType, partition: Re
     try {
       // Try to get next record from current iterator
       if (!downloadNextFile()) {
+        // scalafix:off DisableSyntax.return
         return false
+        // scalafix:on DisableSyntax.return
       }
 
       val event = currentIterator.next()
@@ -122,7 +130,10 @@ abstract class RemoteFilePartitionReaderHelper(schema: StructType, partition: Re
     if (currentIterator.hasNext) {
 
       // Drain iterator and clear byte arrays to release memory
+      // Mutable loop counter required for tracking unconsumed iterator elements during cleanup
+      // scalafix:off DisableSyntax.var
       var unconsumedCount = 0
+      // scalafix:on DisableSyntax.var
       currentIterator.foreach { rawLine =>
         rawLine.logContent.foreach(arr => util.Arrays.fill(arr, 0.toByte))
         rawLine.rawFileBinary.foreach(arr => util.Arrays.fill(arr, 0.toByte))
@@ -131,8 +142,11 @@ abstract class RemoteFilePartitionReaderHelper(schema: StructType, partition: Re
 
     }
 
+    // Null assignment required to release GC-eligible references after cleanup
+    // scalafix:off DisableSyntax.null
     currentRow = null
     currentIterator = null
+    // scalafix:on DisableSyntax.null
     failedFiles.clear()
   }
 
@@ -147,7 +161,9 @@ abstract class RemoteFilePartitionReaderHelper(schema: StructType, partition: Re
     // Make close() idempotent - return early if already closed
     if (isClosed) {
       logDebug(s"[PARTITION-$partition] close() already called, skipping")
+      // scalafix:off DisableSyntax.return
       return
+      // scalafix:on DisableSyntax.return
     }
     isClosed = true
 

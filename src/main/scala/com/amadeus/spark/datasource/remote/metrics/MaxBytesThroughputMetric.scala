@@ -30,10 +30,10 @@ class MaxBytesThroughputMetric extends CustomMetric {
    */
   override def aggregateTaskMetrics(taskMetrics: Array[Long]): String = {
     if (taskMetrics.isEmpty) {
-      return NA
+      NA
+    } else {
+      val maxBytesPerSec = taskMetrics.max
+      formatBytesThroughput(maxBytesPerSec)
     }
-
-    val maxBytesPerSec = taskMetrics.max
-    formatBytesThroughput(maxBytesPerSec)
   }
 }

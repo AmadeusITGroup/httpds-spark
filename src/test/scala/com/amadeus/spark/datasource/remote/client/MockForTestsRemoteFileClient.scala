@@ -5,7 +5,10 @@ import com.amadeus.spark.datasource.remote.conf.RemoteFileDataSourceOptions
 class MockForTestsRemoteFileClient(val options: RemoteFileDataSourceOptions) extends RemoteFileClient {
 
   /** default constructor */
+  // Null required for default RemoteFileDataSourceOptions constructor — Java interop pattern
+  // scalafix:off DisableSyntax.null
   def this() = this(null)
+  // scalafix:on DisableSyntax.null
 
   /**
    * Lists available log files from the remote endpoint.

@@ -25,10 +25,10 @@ class MinBytesThroughputMetric extends CustomMetric {
    */
   override def aggregateTaskMetrics(taskMetrics: Array[Long]): String = {
     if (taskMetrics.isEmpty) {
-      return NA
+      NA
+    } else {
+      val minBytesPerSec = taskMetrics.min
+      formatBytesThroughput(minBytesPerSec)
     }
-
-    val minBytesPerSec = taskMetrics.min
-    formatBytesThroughput(minBytesPerSec)
   }
 }

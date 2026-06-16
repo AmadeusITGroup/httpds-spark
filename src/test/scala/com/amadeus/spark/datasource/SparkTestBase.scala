@@ -9,7 +9,10 @@ import org.scalatest.{BeforeAndAfterAll, Suite}
  */
 trait SparkTestBase extends BeforeAndAfterAll { this: Suite =>
 
+  // Mutable SparkSession required for lazy test base initialization
+  // scalafix:off DisableSyntax.var
   @transient protected var spark: SparkSession = _
+  // scalafix:on DisableSyntax.var
 
   override def beforeAll(): Unit = {
     super.beforeAll()
@@ -24,7 +27,10 @@ trait SparkTestBase extends BeforeAndAfterAll { this: Suite =>
 
   override def afterAll(): Unit = {
     try {
+      // Null check required for BeforeAndAfterAll pattern — SparkSession may not be initialized if beforeAll failed
+      // scalafix:off DisableSyntax.null
       if (spark != null) {
+        // scalafix:on DisableSyntax.null
         spark.stop()
       }
     } finally {

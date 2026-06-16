@@ -11,6 +11,8 @@ import java.sql.Timestamp
  * Unit tests for RawFileLine.
  * Updated for new design: each RawFileLine represents a complete file (not a line).
  */
+// ScalaTest assertions and Java API checks require null comparisons — Java interop test patterns
+// scalafix:off DisableSyntax.null
 class RawFileLineTest extends AnyFunSpec with Matchers {
 
   // Test fixture data
@@ -328,3 +330,4 @@ class RawFileLineTest extends AnyFunSpec with Matchers {
     }
   }
 }
+// scalafix:on DisableSyntax.null
