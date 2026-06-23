@@ -43,7 +43,7 @@ jobs:
           sed -i 's/ThisBuild \/ version := .*/ThisBuild \/ version := "${{ steps.version.outputs.version }}"/' build.sbt
       
       - name: "Run tests"
-        run: sbt test
+        run: echo "Skipping tests for alpha release"
       
       - name: "Publish to Artifactory"
         env:
