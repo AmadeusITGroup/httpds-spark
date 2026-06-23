@@ -96,7 +96,7 @@ ThisBuild / credentials ++= {
   
   (artifactoryUser, artifactoryPassword) match {
     case (Some(user), Some(password)) =>
-      Seq(Credentials("Artifactory Realm", "artifactory.central.amadeus.net", user, password))
+      Seq(Credentials("Artifactory Realm", "repository.rnd.amadeus.net", user, password))
     case _ =>
       // Fallback to GitHub Packages if Artifactory credentials not available
       if (sys.env.contains("GITHUB_REGISTRY_TOKEN")) {
@@ -110,15 +110,14 @@ ThisBuild / credentials ++= {
 // PUBLISH SETUP (Maven style)
 ThisBuild / publishTo := {
   val isAlpha = version.value.contains("alpha")
-  val artifactoryBase = "https://artifactory.central.amadeus.net/artifactory"
+  // Use repository.rnd.amadeus.net - same as other ABFD projects
+  val artifactoryBase = "https://repository.rnd.amadeus.net"
   
   if (sys.env.contains("ARTIFACTORY_USER") || sys.env.contains("ARTIFACTORY_DEV_USER")) {
-    if (isAlpha) {
-      Some("Artifactory Snapshots" at s"$artifactoryBase/maven-abfd-dev-local")
-    } else if (version.value.endsWith("-SNAPSHOT")) {
-      Some("Artifactory Snapshots" at s"$artifactoryBase/maven-abfd-dev-local")
+    if (isAlpha || version.value.endsWith("-SNAPSHOT")) {
+      Some("Artifactory Snapshots" at s"$artifactoryBase/mvn-built/")
     } else {
-      Some("Artifactory Releases" at s"$artifactoryBase/maven-abfd-release-local")
+      Some("Artifactory Releases" at s"$artifactoryBase/mvn-production/")
     }
   } else {
     // Fallback to GitHub Packages
