@@ -47,8 +47,8 @@ jobs:
       
       - name: "Publish to Artifactory"
         env:
-          ARTIFACTORY_DEV_USER: ${{ secrets.ARTIFACTORY_DEV_USER }}
-          ARTIFACTORY_DEV_PASSWORD: ${{ secrets.ARTIFACTORY_DEV_PASSWORD }}
+          ARTIFACTORY_USER: ${{ secrets.IZ_USERNAME }}
+          ARTIFACTORY_PASSWORD: ${{ secrets.IZ_PASSWORD }}
         run: sbt publish
       
       - name: "Create git tag"
