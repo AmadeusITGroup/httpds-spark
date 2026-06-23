@@ -270,7 +270,7 @@ class RemoteMicroBatchStream(schema: StructType, options: CaseInsensitiveStringM
     // We can also group files into partitions if there are too many small files
     val numPartitions = math.min(filesToProcess.size, config.numPartitions)
     // filesToProcess is an unordered Set, so sort by name for a deterministic partition layout across re-planning.
-    val partitions    = createPartitions(numPartitions, filesToProcess.toSeq, sortByName = true)
+    val partitions = createPartitions(numPartitions, filesToProcess.toSeq, sortByName = true)
 
     partitions.asInstanceOf[Array[InputPartition]]
   }
