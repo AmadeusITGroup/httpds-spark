@@ -1,6 +1,6 @@
 name := "httpds-spark"
 ThisBuild / organization := "com.amadeus.spark"
-ThisBuild / version := "1.0.0-SNAPSHOT"
+ThisBuild / version := "1.0.0-alpha1"
 
 ThisBuild / scalaVersion := "2.12.18"
 

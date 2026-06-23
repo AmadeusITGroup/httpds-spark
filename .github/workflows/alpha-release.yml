@@ -1,6 +1,10 @@
 name: "Alpha Release"
 
 on:
+  push:
+    branches: ["refactor/cleanup-for-oss"]
+    paths:
+      - ".github/workflows/alpha-release.yml"
   workflow_dispatch:
     inputs:
       alpha_suffix:
