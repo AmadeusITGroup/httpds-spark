@@ -89,18 +89,42 @@ releaseProcess := Seq[ReleaseStep](
 releaseCommitMessage := s"chore(release): set version to ${(ThisBuild / version).value} [skip ci]"
 releaseNextCommitMessage := s"chore(release): bump version to ${(ThisBuild / version).value} [skip ci]"
 
-// Global GitHub Packages settings
-ThisBuild / credentials += Credentials(
-  "GitHub Package Registry",
-  "maven.pkg.github.com",
-  "",
-  sys.env.getOrElse("GITHUB_REGISTRY_TOKEN", "")
-)
+// Artifactory credentials
+ThisBuild / credentials ++= {
+  val artifactoryUser = sys.env.get("ARTIFACTORY_USER").orElse(sys.env.get("ARTIFACTORY_DEV_USER"))
+  val artifactoryPassword = sys.env.get("ARTIFACTORY_PASSWORD").orElse(sys.env.get("ARTIFACTORY_DEV_PASSWORD"))
+  
+  (artifactoryUser, artifactoryPassword) match {
+    case (Some(user), Some(password)) =>
+      Seq(Credentials("Artifactory Realm", "artifactory.central.amadeus.net", user, password))
+    case _ =>
+      // Fallback to GitHub Packages if Artifactory credentials not available
+      if (sys.env.contains("GITHUB_REGISTRY_TOKEN")) {
+        Seq(Credentials("GitHub Package Registry", "maven.pkg.github.com", "", sys.env("GITHUB_REGISTRY_TOKEN")))
+      } else {
+        Seq.empty
+      }
+  }
+}
 
 // PUBLISH SETUP (Maven style)
-ThisBuild / publishTo := Some(
-  "GitHub Packages" at "https://maven.pkg.github.com/AmadeusITGroup/httpds-spark"
-)
+ThisBuild / publishTo := {
+  val isAlpha = version.value.contains("alpha")
+  val artifactoryBase = "https://artifactory.central.amadeus.net/artifactory"
+  
+  if (sys.env.contains("ARTIFACTORY_USER") || sys.env.contains("ARTIFACTORY_DEV_USER")) {
+    if (isAlpha) {
+      Some("Artifactory Snapshots" at s"$artifactoryBase/maven-abfd-dev-local")
+    } else if (version.value.endsWith("-SNAPSHOT")) {
+      Some("Artifactory Snapshots" at s"$artifactoryBase/maven-abfd-dev-local")
+    } else {
+      Some("Artifactory Releases" at s"$artifactoryBase/maven-abfd-release-local")
+    }
+  } else {
+    // Fallback to GitHub Packages
+    Some("GitHub Packages" at "https://maven.pkg.github.com/AmadeusITGroup/httpds-spark")
+  }
+}
 
 ThisBuild / publishMavenStyle := true
 // Additional Maven metadata
