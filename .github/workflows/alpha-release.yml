@@ -18,7 +18,7 @@ permissions:
 jobs:
   publish-alpha:
     name: "Publish Alpha to Artifactory"
-    runs-on: ubuntu-latest
+    runs-on: gmsshr-maven-amadeus-cplatform
     environment: development
     
     steps:
