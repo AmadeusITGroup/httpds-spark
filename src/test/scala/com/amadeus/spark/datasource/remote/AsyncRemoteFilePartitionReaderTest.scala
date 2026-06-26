@@ -2,16 +2,20 @@ package com.amadeus.spark.datasource.remote
 
 import com.amadeus.spark.datasource.remote.client._
 import com.amadeus.spark.datasource.remote.conf.RemoteFileDataSourceOptions
-import org.scalatest.funspec.AnyFunSpec
-import org.scalatest.matchers.should.Matchers
 import org.apache.spark.sql.util.CaseInsensitiveStringMap
 import org.apache.spark.unsafe.types.UTF8String
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 
 import java.net.http.HttpClient
 import java.sql.Timestamp
 import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future, Promise}
 
+// ScalaTest assertions and Java API checks require null comparisons — Java interop test patterns
+// scalafix:off DisableSyntax.null
+// Spark/Java API reflection tests require asInstanceOf casts for type-erased Java generics
+// scalafix:off DisableSyntax.asInstanceOf
 class AsyncRemoteFilePartitionReaderTest extends AnyFunSpec with Matchers {
 
   val remoteFile = RemoteFile("file.log", Timestamp.valueOf("2026-05-05 00:00:00"))
@@ -35,7 +39,10 @@ class AsyncRemoteFilePartitionReaderTest extends AnyFunSpec with Matchers {
    * Stub async client that returns pre-configured results for each filename.
    */
   class StubAsyncClient(results: Map[String, DownloadResult]) extends AsyncRemoteFileClient {
+    // Mutable flag required for test stub tracking of client close state
+    // scalafix:off DisableSyntax.var
     var closed = false
+    // scalafix:on DisableSyntax.var
 
     override def initAsync(executionContext: ExecutionContext, httpClient: HttpClient): Unit = ()
     override def listLogFilesAsync(): Future[Seq[RemoteFile]]                                = Future.successful(Seq.empty)
@@ -52,7 +59,10 @@ class AsyncRemoteFilePartitionReaderTest extends AnyFunSpec with Matchers {
    */
   class SequentialStubAsyncClient(resultSeq: Seq[DownloadResult]) extends AsyncRemoteFileClient {
     private val resultsIterator = resultSeq.iterator
-    var closed                  = false
+    // Mutable flag required for test stub tracking of client close state
+    // scalafix:off DisableSyntax.var
+    var closed = false
+    // scalafix:on DisableSyntax.var
 
     override def initAsync(executionContext: ExecutionContext, httpClient: HttpClient): Unit = ()
     override def listLogFilesAsync(): Future[Seq[RemoteFile]]                                = Future.successful(Seq.empty)
@@ -70,7 +80,10 @@ class AsyncRemoteFilePartitionReaderTest extends AnyFunSpec with Matchers {
    * This forces the None branch (waitForFirstCompletedDownload).
    */
   class DelayedStubAsyncClient(results: Map[String, DownloadResult], delayMillis: Long) extends AsyncRemoteFileClient {
+    // Mutable flag required for test stub tracking of client close state
+    // scalafix:off DisableSyntax.var
     var closed = false
+    // scalafix:on DisableSyntax.var
 
     override def initAsync(executionContext: ExecutionContext, httpClient: HttpClient): Unit = ()
     override def listLogFilesAsync(): Future[Seq[RemoteFile]]                                = Future.successful(Seq.empty)
@@ -306,3 +319,5 @@ class AsyncRemoteFilePartitionReaderTest extends AnyFunSpec with Matchers {
   }
 
 }
+// scalafix:on DisableSyntax.asInstanceOf
+// scalafix:on DisableSyntax.null

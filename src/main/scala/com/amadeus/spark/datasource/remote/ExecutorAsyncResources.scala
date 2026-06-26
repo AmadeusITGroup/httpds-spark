@@ -3,8 +3,8 @@ package com.amadeus.spark.datasource.remote
 import org.apache.spark.internal.Logging
 
 import java.net.http.HttpClient
-import java.util.concurrent.{ExecutorService, Executors, ThreadFactory, TimeUnit}
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.{ExecutorService, Executors, ThreadFactory, TimeUnit}
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutorService}
 
 /**
@@ -39,10 +39,13 @@ import scala.concurrent.{ExecutionContext, ExecutionContextExecutorService}
  */
 object ExecutorAsyncResources extends Logging {
 
+  // Mutable state required for executor resource lifecycle management
+  // scalafix:off DisableSyntax.var
   @volatile private var initialized                             = false
   private var executorService: ExecutorService                  = _
   private var executionContext: ExecutionContextExecutorService = _
   private var httpClient: HttpClient                            = _
+  // scalafix:on DisableSyntax.var
 
   // Shutdown hook for cleanup
   private val shutdownHook = new Thread(() => shutdown(), "executor-async-resources-shutdown")
@@ -114,7 +117,7 @@ object ExecutorAsyncResources extends Logging {
     }
 
     initialized = true
-    logInfo(s"[EXECUTOR-RESOURCES] Initialized successfully.")
+    logInfo("[EXECUTOR-RESOURCES] Initialized successfully.")
   }
 
   /**
@@ -220,7 +223,7 @@ object ExecutorAsyncResources extends Logging {
       initialized = false
       logInfo("[EXECUTOR-RESOURCES] Shutdown complete")
 
-      Runtime.getRuntime.removeShutdownHook(shutdownHook)
+      val _ = Runtime.getRuntime.removeShutdownHook(shutdownHook)
     }
   }
 }

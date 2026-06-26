@@ -30,7 +30,10 @@ class WorkloadRefresher(config: RemoteFileDataSourceOptions) extends WorkloadRef
   }
 
   /** Timestamp of the last poll to Incapsula API. */
+  // Mutable state required for tracking poll interval timing
+  // scalafix:off DisableSyntax.var
   private var lastPollTime: Long = 0L
+  // scalafix:on DisableSyntax.var
 
   /** List of discovered log files. Thread-safe for async updates. */
   private val discoveredFilesRef: AtomicReference[Seq[RemoteFile]] = new AtomicReference(Seq.empty)
@@ -100,7 +103,9 @@ class WorkloadRefresher(config: RemoteFileDataSourceOptions) extends WorkloadRef
     val now = System.currentTimeMillis()
     if (WorkloadRefresher.hasToSkipPull(lastPollTime, config.pollingInterval)) {
       logDebug(s"  refreshFileList: Skipping poll - last poll was ${now - lastPollTime}ms ago (interval: ${config.pollingInterval.toMillis}ms)")
+      // scalafix:off DisableSyntax.return
       return
+      // scalafix:on DisableSyntax.return
     }
 
     logDebug(s"  refreshFileList: Polling for new files (last poll: ${now - lastPollTime}ms ago)")
@@ -123,7 +128,7 @@ class WorkloadRefresher(config: RemoteFileDataSourceOptions) extends WorkloadRef
    * @return Set of all currently available file names
    */
   def getAllCurrentFiles: Set[String] = {
-    logDebug(s"  getAllCurrentFiles: Fetching all currently available files for latest mode")
+    logDebug("  getAllCurrentFiles: Fetching all currently available files for latest mode")
     val files = fetchFilesFromServer()
     files.map(_.name).toSet
   }

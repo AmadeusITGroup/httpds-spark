@@ -42,7 +42,10 @@ class AsyncRemoteFilePartitionReader(
     with Logging {
 
   /** Current file index being processed. */
+  // Mutable iteration state required for sequential file index tracking
+  // scalafix:off DisableSyntax.var
   private var currentFileIndex: Int = 0
+  // scalafix:on DisableSyntax.var
 
   /**
    * Map of in-flight downloads: filename → Future[DownloadResult]
@@ -58,7 +61,10 @@ class AsyncRemoteFilePartitionReader(
   private val downloadTimeout: Duration = options.readTimeout.plus(options.readTimeout)
 
   /** Flag to track cancellation state */
+  // Volatile var required for thread-safe cancellation flag in async reader
+  // scalafix:off DisableSyntax.var
   @volatile private var isCancelled: Boolean = false
+  // scalafix:on DisableSyntax.var
 
   // Register task completion listener for proper cancellation support
   Option(TaskContext.get()).foreach { taskContext =>
@@ -186,20 +192,26 @@ class AsyncRemoteFilePartitionReader(
   override protected def downloadNextFile(): Boolean = {
     if (isCancelled || isTaskInterrupted) {
       logWarning(s"[PARTITION-$partition] Task cancelled, stopping iteration")
+      // scalafix:off DisableSyntax.return
       return false
+      // scalafix:on DisableSyntax.return
     }
 
     while (!currentIterator.hasNext) {
 
       if (isCancelled || isTaskInterrupted) {
         logWarning(s"[PARTITION-$partition] Task cancelled during file processing")
+        // scalafix:off DisableSyntax.return
         return false
+        // scalafix:on DisableSyntax.return
       }
 
       if (areAllFilesDownloadedOrFailed) {
-        logInfo(s"[PARTITION-${partition}] All files processed - ending iteration")
+        logInfo(s"[PARTITION-$partition] All files processed - ending iteration")
         close() // Cleanup resources proactively
+        // scalafix:off DisableSyntax.return
         return false
+        // scalafix:on DisableSyntax.return
       }
 
       // Get next completed download (whichever file finishes first)
@@ -249,7 +261,10 @@ class AsyncRemoteFilePartitionReader(
       // Attempt to wait briefly for in-flight downloads to complete (best effort)
       // This helps prevent memory leaks from abandoned futures
       val cancellationDeadline = System.currentTimeMillis() + 2000 // 2 seconds
-      var remainingDownloads   = inFlightDownloads.size
+      // Mutable loop counter required for tracking remaining in-flight downloads
+      // scalafix:off DisableSyntax.var
+      var remainingDownloads = inFlightDownloads.size
+      // scalafix:on DisableSyntax.var
 
       while (remainingDownloads > 0 && System.currentTimeMillis() < cancellationDeadline) {
 
@@ -297,12 +312,12 @@ object AsyncRemoteFilePartitionReader extends Logging {
       parsedOptions: RemoteFileDataSourceOptions,
       restFilePartition: RemoteFileInputPartition
   ): AsyncRemoteFilePartitionReader = {
-    logDebug(s"[READER-FACTORY] Creating AsyncRemoteFilePartitionReader for partition ${restFilePartition}")
+    logDebug(s"[READER-FACTORY] Creating AsyncRemoteFilePartitionReader for partition $restFilePartition")
 
     // Get shared resources from executor (one ExecutionContext + one HttpClient per executor)
     val executionContext = ExecutorAsyncResources.getExecutionContext(optionsMap)
     val httpClient       = ExecutorAsyncResources.getHttpClient(optionsMap)
-    logDebug(s"[READER-FACTORY] Obtained shared ExecutionContext and HttpClient from ExecutorAsyncResources")
+    logDebug("[READER-FACTORY] Obtained shared ExecutionContext and HttpClient from ExecutorAsyncResources")
 
     // Create client
     val client = RemoteFileClient.from(parsedOptions)
@@ -310,7 +325,7 @@ object AsyncRemoteFilePartitionReader extends Logging {
     // Initialize async support if client supports it
     val asyncClient = client match {
       case asClient: AsyncRemoteFileClient =>
-        logDebug(s"[READER-FACTORY] Client supports async, initializing with shared resources")
+        logDebug("[READER-FACTORY] Client supports async, initializing with shared resources")
         asClient.initAsync(executionContext, httpClient)
         asClient
       case _ =>

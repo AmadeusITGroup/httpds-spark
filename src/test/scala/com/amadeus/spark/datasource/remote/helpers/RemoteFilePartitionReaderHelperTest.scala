@@ -9,6 +9,8 @@ import org.scalatest.matchers.should.Matchers
 
 import java.sql.Timestamp
 
+// ScalaTest assertions and Java API checks require null comparisons — Java interop test patterns
+// scalafix:off DisableSyntax.null
 class RemoteFilePartitionReaderHelperTest extends AnyFunSpec with Matchers {
 
   val partition: RemoteFileInputPartition = RemoteFileInputPartition(Seq("file1.log", "file2.log"))
@@ -17,11 +19,16 @@ class RemoteFilePartitionReaderHelperTest extends AnyFunSpec with Matchers {
   /** Minimal concrete implementation */
   class TestReader(downloadResults: List[DownloadResult]) extends RemoteFilePartitionReaderHelper(RemoteFileFormat.SCHEMA, partition) {
     private val results = scala.collection.mutable.Queue(downloadResults: _*)
-    var clientClosed    = false
+    // Mutable flag required for test reader tracking of client close state
+    // scalafix:off DisableSyntax.var
+    var clientClosed = false
+    // scalafix:on DisableSyntax.var
 
     override protected def downloadNextFile(): Boolean = {
+      // scalafix:off DisableSyntax.return
       if (currentIterator != null && currentIterator.hasNext) { return true }
       if (results.isEmpty) { return false }
+      // scalafix:on DisableSyntax.return
       processDownloadedFile("file.log", results.dequeue())
       currentIterator.hasNext
     }
@@ -222,3 +229,4 @@ class RemoteFilePartitionReaderHelperTest extends AnyFunSpec with Matchers {
     RawFileLine(remoteFile, downloadTimestamp = remoteFile.fetchedAt, error = error, logContent = Some(Array[Byte](1, 2, 3)), rawFileBinary = Some(Array[Byte](4, 5, 6)))
   }
 }
+// scalafix:on DisableSyntax.null

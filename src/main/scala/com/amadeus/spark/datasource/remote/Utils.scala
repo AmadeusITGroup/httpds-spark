@@ -34,7 +34,10 @@ object Serializer {
     def deserialize(bytes: Array[Byte]): T = {
       val byteStream   = new ByteArrayInputStream(bytes)
       val objectStream = new ObjectInputStream(byteStream)
-      val result       = objectStream.readObject().asInstanceOf[T]
+      val result       =
+        // scalafix:off DisableSyntax.asInstanceOf
+        objectStream.readObject().asInstanceOf[T]
+      // scalafix:on DisableSyntax.asInstanceOf
       objectStream.close()
       result
     }

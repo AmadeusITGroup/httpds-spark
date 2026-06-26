@@ -12,6 +12,10 @@ import scala.collection.JavaConverters._
 /**
  * Unit tests for RemoteFileClient companion object.
  */
+// ScalaTest assertions and Java API checks require null comparisons — Java interop test patterns
+// scalafix:off DisableSyntax.null
+// Spark/Java API reflection tests require asInstanceOf casts for type-erased Java generics
+// scalafix:off DisableSyntax.asInstanceOf
 class RemoteFileClientTest extends AnyFunSpec with Matchers {
 
   describe("from") {
@@ -106,3 +110,5 @@ class RemoteFileClientTest extends AnyFunSpec with Matchers {
     RemoteFileDataSourceOptions.fromMap(new CaseInsensitiveStringMap(optionsMap))
   }
 }
+// scalafix:on DisableSyntax.asInstanceOf
+// scalafix:on DisableSyntax.null

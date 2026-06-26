@@ -29,10 +29,10 @@ class MaxDownloadDurationMetric extends CustomMetric {
    */
   override def aggregateTaskMetrics(taskMetrics: Array[Long]): String = {
     if (taskMetrics.isEmpty) {
-      return NA
+      NA
+    } else {
+      val maxDurationMs = taskMetrics.max
+      formatDuration(maxDurationMs)
     }
-
-    val maxDurationMs = taskMetrics.max
-    formatDuration(maxDurationMs)
   }
 }

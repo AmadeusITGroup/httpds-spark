@@ -27,11 +27,11 @@ class MinDownloadDurationMetric extends CustomMetric {
    */
   override def aggregateTaskMetrics(taskMetrics: Array[Long]): String = {
     if (taskMetrics.isEmpty) {
-      return NA
+      NA
+    } else {
+      val minDurationMs = taskMetrics.min
+      formatDuration(minDurationMs)
     }
-
-    val minDurationMs = taskMetrics.min
-    formatDuration(minDurationMs)
   }
 
 }

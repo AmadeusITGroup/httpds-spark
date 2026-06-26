@@ -29,10 +29,10 @@ class MinRecordsThroughputMetric extends CustomMetric {
    */
   override def aggregateTaskMetrics(taskMetrics: Array[Long]): String = {
     if (taskMetrics.isEmpty) {
-      return NA
+      NA
+    } else {
+      val minThroughput = taskMetrics.min
+      formatRecordThroughput(minThroughput)
     }
-
-    val minThroughput = taskMetrics.min
-    formatRecordThroughput(minThroughput)
   }
 }

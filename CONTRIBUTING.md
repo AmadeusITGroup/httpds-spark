@@ -20,6 +20,7 @@ Thank you for your interest in contributing to **httpds-spark**! This guide will
 - [Coding Guidelines](#coding-guidelines)
   - [Style & Formatting](#style--formatting)
   - [Auto-formatting Setup](#auto-formatting-setup)
+  - [Code Quality](#code-quality)
   - [Documentation](#documentation)
 - [Pull Request Review Process](#pull-request-review-process)
 - [License](#license)
@@ -168,6 +169,52 @@ sbt "testOnly *ClientRegistryTest"   # Run a specific test class
 #### VS Code
 
 Install the [Metals](https://scalameta.org/metals/) extension — it picks up `.scalafmt.conf` automatically and formats on save.
+
+### Code Quality
+
+The project uses [Scalafix](https://scalacenter.github.io/scalafix/) to enforce code quality rules beyond formatting.
+
+**Enabled rules (configured in `.scalafix.conf`):**
+
+| Rule                           | Purpose                                  |
+|--------------------------------|------------------------------------------|
+| `OrganizeImports`              | Sorts and deduplicates imports           |
+| `RedundantSyntax`              | Removes unnecessary syntax               |
+| `DisableSyntax.noVars`         | Discourages mutable `var` state          |
+| `DisableSyntax.noNulls`        | Discourages `null` literals              |
+| `DisableSyntax.noAsInstanceOf` | Discourages unchecked casts              |
+| `DisableSyntax.noIsInstanceOf` | Discourages runtime type checks          |
+| `DisableSyntax.noReturns`      | Discourages non-tail `return` statements |
+| `DisableSyntax.noXml`          | Discourages XML literals                 |
+| `LeakingImplicitClassVal`      | Prevents leaking implicit class vals     |
+| `NoValInForComprehension`      | Removes redundant `val` inside `for`     |
+
+**Running Scalafix locally:**
+
+```bash
+sbt "scalafixAll --check"   # Check for violations (CI-friendly, no changes)
+sbt scalafixAll              # Auto-fix what can be fixed automatically
+```
+
+**Convenience aliases:**
+
+```bash
+sbt lint      # scalafmtCheck + scalafixAll --check (full read-only lint)
+sbt lintFix   # scalafmtAll + scalafixAll            (auto-fix everything)
+```
+
+**Suppressing a rule for legacy or interop code:**
+
+If a violation cannot be removed (e.g., `null` required by a Java API), suppress it with a justification comment:
+
+```scala
+// Spark MicroBatchStream Java API requires returning null when no new data is available
+// scalafix:off DisableSyntax.null
+null
+// scalafix:on DisableSyntax.null
+```
+
+Every `// scalafix:off` **must** be accompanied by a comment explaining why the suppression is necessary.
 
 ### Documentation
 

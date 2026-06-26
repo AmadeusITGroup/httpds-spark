@@ -29,10 +29,10 @@ class MaxRecordsThroughputMetric extends CustomMetric {
    */
   override def aggregateTaskMetrics(taskMetrics: Array[Long]): String = {
     if (taskMetrics.isEmpty) {
-      return NA
+      NA
+    } else {
+      val maxThroughput = taskMetrics.max
+      formatRecordThroughput(maxThroughput)
     }
-
-    val maxThroughput = taskMetrics.max
-    formatRecordThroughput(maxThroughput)
   }
 }

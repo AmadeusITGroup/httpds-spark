@@ -30,9 +30,9 @@ class MinFilesDownloadedMetric extends CustomMetric {
    */
   override def aggregateTaskMetrics(taskMetrics: Array[Long]): String = {
     if (taskMetrics.isEmpty) {
-      return NA
+      NA
+    } else {
+      taskMetrics.min.toString
     }
-
-    taskMetrics.min.toString
   }
 }

@@ -27,11 +27,11 @@ class TotalBytesDownloadedMetric extends CustomMetric {
    */
   override def aggregateTaskMetrics(taskMetrics: Array[Long]): String = {
     if (taskMetrics.isEmpty) {
-      return NA
+      NA
+    } else {
+      val totalBytes = taskMetrics.sum
+      formatBytes(totalBytes)
     }
-
-    val totalBytes = taskMetrics.sum
-    formatBytes(totalBytes)
   }
 
   /**

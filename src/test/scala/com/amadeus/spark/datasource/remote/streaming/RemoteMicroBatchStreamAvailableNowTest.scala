@@ -17,6 +17,8 @@ import scala.collection.JavaConverters._
  * Spark's Trigger.AvailableNow() mode for processing all available data at query
  * start and then stopping automatically.
  */
+// Spark/Java API reflection tests require asInstanceOf casts for type-erased Java generics
+// scalafix:off DisableSyntax.asInstanceOf
 class RemoteMicroBatchStreamAvailableNowTest extends AnyFunSpec with Matchers with MockitoSugar with BeforeAndAfterEach {
 
   private val testSchema = StructType(
@@ -161,3 +163,4 @@ class RemoteMicroBatchStreamAvailableNowTest extends AnyFunSpec with Matchers wi
     }
   }
 }
+// scalafix:on DisableSyntax.asInstanceOf

@@ -30,10 +30,10 @@ class AvgFilesDownloadedMetric extends CustomMetric {
    */
   override def aggregateTaskMetrics(taskMetrics: Array[Long]): String = {
     if (taskMetrics.isEmpty) {
-      return NA
+      NA
+    } else {
+      val avgDownloadedFiles = taskMetrics.sum / taskMetrics.length
+      f"$avgDownloadedFiles%,d"
     }
-
-    val avgDownloadedFiles = taskMetrics.sum / taskMetrics.length
-    f"$avgDownloadedFiles%,d"
   }
 }

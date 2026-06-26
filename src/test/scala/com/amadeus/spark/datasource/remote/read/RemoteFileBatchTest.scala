@@ -1,14 +1,15 @@
 package com.amadeus.spark.datasource.remote.read
 
-import com.amadeus.spark.datasource.remote.RemoteFileInputPartition
+import com.amadeus.spark.datasource.remote.{RemoteFileInputPartition, RemoteFilePartitionReaderFactory}
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import org.apache.spark.sql.util.CaseInsensitiveStringMap
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
-import com.amadeus.spark.datasource.remote.RemoteFilePartitionReaderFactory
 
 import scala.collection.JavaConverters._
 
+// Spark/Java API reflection tests require asInstanceOf casts for type-erased Java generics
+// scalafix:off DisableSyntax.asInstanceOf
 class RemoteFileBatchTest extends AnyFunSpec with Matchers {
 
   private val schema = StructType(Seq(StructField("value", StringType)))
@@ -81,3 +82,4 @@ class RemoteFileBatchTest extends AnyFunSpec with Matchers {
     }
   }
 }
+// scalafix:on DisableSyntax.asInstanceOf

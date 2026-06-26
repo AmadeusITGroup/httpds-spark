@@ -18,7 +18,10 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 trait WorkloadRefresherAsyncHelper extends Logging {
 
   /** Track pending async operations */
+  // Volatile var required for thread-safe async future tracking
+  // scalafix:off DisableSyntax.var
   @volatile private var pendingFuture: Option[Future[Unit]] = None
+  // scalafix:on DisableSyntax.var
 
   /** ExecutionContext for async operations */
   private implicit val executionContext: ExecutionContext = ExecutionContext.global
@@ -51,7 +54,7 @@ trait WorkloadRefresherAsyncHelper extends Logging {
    * @return Sequence of RemoteFile objects fetched asynchronously
    */
   protected def fetchFilesAsyncFromServer(asyncClient: AsyncRemoteFileClient): Seq[RemoteFile] = {
-    logDebug(s"  fetchFilesFromServer: Using async mode with AsyncRemoteFileClient")
+    logDebug("  fetchFilesFromServer: Using async mode with AsyncRemoteFileClient")
 
     try {
       val future = asyncClient.listLogFilesAsync()
@@ -75,7 +78,7 @@ trait WorkloadRefresherAsyncHelper extends Logging {
    */
   protected def refreshAsyncFileList(asyncClient: AsyncRemoteFileClient): Unit = {
 
-    logDebug(s"  refreshFileList: Using async mode with AsyncRemoteFileClient")
+    logDebug("  refreshFileList: Using async mode with AsyncRemoteFileClient")
 
     val future = asyncClient
       .listLogFilesAsync()

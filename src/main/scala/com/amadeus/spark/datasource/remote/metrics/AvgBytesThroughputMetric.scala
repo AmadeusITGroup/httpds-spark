@@ -30,10 +30,10 @@ class AvgBytesThroughputMetric extends CustomMetric {
    */
   override def aggregateTaskMetrics(taskMetrics: Array[Long]): String = {
     if (taskMetrics.isEmpty) {
-      return NA
+      NA
+    } else {
+      val avgBytesPerSec = taskMetrics.sum / taskMetrics.length
+      formatBytesThroughput(avgBytesPerSec)
     }
-
-    val avgBytesPerSec = taskMetrics.sum / taskMetrics.length
-    formatBytesThroughput(avgBytesPerSec)
   }
 }

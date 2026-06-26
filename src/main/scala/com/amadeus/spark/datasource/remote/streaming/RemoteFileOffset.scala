@@ -77,7 +77,9 @@ private object RemoteFileOffset extends Logging {
   private def toJson(offset: RemoteFileOffset): String = {
     implicit val setSerializer: Serializer[Serializable] = Serializer.javaSerializer[Serializable]
 
+    // scalafix:off DisableSyntax.asInstanceOf
     val compressedFiles = Utils.compressZstd(offset.indexFiles.asInstanceOf[Serializable])
+    // scalafix:on DisableSyntax.asInstanceOf
     val map: Map[String, Any] = Map(
       "createdAt"  -> offset.createdAt,
       "indexFiles" -> compressedFiles.b64
@@ -96,7 +98,9 @@ private object RemoteFileOffset extends Logging {
       implicit val setSerializer: Serializer[Serializable] = Serializer.javaSerializer[Serializable]
       val b64String                                        = node.get("indexFiles").asText()
       val compressed                                       = Utils.compressedDataFromB64[Serializable](b64String)
+      // scalafix:off DisableSyntax.asInstanceOf
       compressed.decompress().asInstanceOf[Set[String]]
+      // scalafix:on DisableSyntax.asInstanceOf
     }
 
     val createdAt = node.get("createdAt").asLong()

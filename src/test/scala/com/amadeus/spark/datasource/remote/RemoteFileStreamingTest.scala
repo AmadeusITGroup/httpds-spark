@@ -93,6 +93,6 @@ class RemoteFileStreamingTest extends AnyFunSpec with Matchers with SparkTestBas
     if (file.isDirectory) {
       file.listFiles().foreach(deleteRecursively)
     }
-    file.delete()
+    val _ = file.delete()
   }
 }

@@ -30,9 +30,9 @@ class MaxFilesDownloadedMetric extends CustomMetric {
    */
   override def aggregateTaskMetrics(taskMetrics: Array[Long]): String = {
     if (taskMetrics.isEmpty) {
-      return NA
+      NA
+    } else {
+      taskMetrics.max.toString
     }
-
-    taskMetrics.max.toString
   }
 }

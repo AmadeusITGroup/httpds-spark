@@ -66,12 +66,12 @@ object ClientRegistry extends Logging {
       val internalClient  = internalClients.head.getClass
 
       logWarning(s"Selecting internal source: ${internalClient.getName} over external sources: ${externalSources.mkString(", ")}")
-      return internalClient
+      internalClient
+    } else {
+      throw new IllegalArgumentException(
+        s"Multiple data sources found for the same short name $provider: ${clientNames.mkString(", ")}. Please specify the fully qualified class name to avoid ambiguity."
+      )
     }
-
-    throw new IllegalArgumentException(
-      s"Multiple data sources found for the same short name $provider: ${clientNames.mkString(", ")}. Please specify the fully qualified class name to avoid ambiguity."
-    )
   }
 
   /** Retrieves the appropriate class loader. */

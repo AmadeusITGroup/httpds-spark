@@ -23,7 +23,10 @@ class RemoteFilePartitionReader(schema: StructType, partition: RemoteFileInputPa
   @transient private lazy val client: RemoteFileClient = RemoteFileClient.from(options)
 
   /** Current file index being processed. */
+  // Mutable iteration state required for sequential file index tracking
+  // scalafix:off DisableSyntax.var
   protected var currentFileIndex: Int = 0
+  // scalafix:on DisableSyntax.var
 
   /**
    * Downloads the next file if the current iterator is exhausted.
@@ -35,7 +38,9 @@ class RemoteFilePartitionReader(schema: StructType, partition: RemoteFileInputPa
       // Move to next file
       if (currentFileIndex >= partition.files.size) {
         logInfo(s"[PARTITION-$partition] All files processed - ending iteration")
+        // scalafix:off DisableSyntax.return
         return false
+        // scalafix:on DisableSyntax.return
       }
 
       val filename = partition.files(currentFileIndex)

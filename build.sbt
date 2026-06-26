@@ -4,6 +4,10 @@ ThisBuild / version := "1.0.0-alpha1"
 
 ThisBuild / scalaVersion := "2.12.18"
 
+ThisBuild / semanticdbEnabled := true
+ThisBuild / semanticdbVersion := scalafixSemanticdb.revision
+ThisBuild / scalafixDependencies += "com.github.liancheng" %% "organize-imports" % "0.6.0"
+
 val sparkVersion        = "3.5.0"
 val sttpClientVersion   = "4.0.13"
 val jacksonVersion      = "2.15.3"
@@ -26,7 +30,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.scala-logging" %% "scala-logging" % scalaLoggingVersion,
   // Test Dependencies
   "org.scalatest"     %% "scalatest"      % scalatestVersion         % Test,
-  "org.scalatestplus" %% "mockito-5-8"    % s"${scalatestVersion}.0" % Test,
+  "org.scalatestplus" %% "mockito-5-8"    % s"$scalatestVersion.0" % Test,
   "org.apache.spark"  %% "spark-sql"      % sparkVersion             % Test classifier "tests",
   "org.apache.spark"  %% "spark-catalyst" % sparkVersion             % Test classifier "tests",
   "org.wiremock"       % "wiremock"       % wiremockVersion          % Test
@@ -45,11 +49,20 @@ scalacOptions ++= Seq(
   "-unchecked",
   "-Xlint",
   "-Ywarn-dead-code",
-  "-Ywarn-unused:imports"
+  "-Ywarn-unused:imports",
+  "-Ywarn-unused:locals",
+  "-Ywarn-unused:params",
+  "-Ywarn-unused:privates",
+  "-Ywarn-value-discard",
+  "-Xfatal-warnings"
 )
 
 // JVM options for tests (Java 17+ compatibility with Spark)
 Test / fork := true
+
+// Command aliases for linting
+addCommandAlias("lint", "scalafmtCheck; scalafixAll --check")
+addCommandAlias("lintFix", "scalafmtAll; scalafixAll")
 Test / javaOptions ++= Seq(
   "--add-opens=java.base/java.lang=ALL-UNNAMED",
   "--add-opens=java.base/java.lang.invoke=ALL-UNNAMED",

@@ -34,6 +34,9 @@ jobs:
       - name: "Scalafmt check"
         run: sbt scalafmtCheck
 
+      - name: "Scalafix check"
+        run: sbt "scalafixAll --check"
+
       - name: "Compile"
         run: sbt clean compile
 
