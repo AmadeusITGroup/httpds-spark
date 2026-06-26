@@ -57,6 +57,11 @@ scalacOptions ++= Seq(
   "-Xfatal-warnings"
 )
 
+// Scaladoc emits non-fatal "could not find any member to link" warnings for some
+// [[...]] references; under -Xfatal-warnings these would abort `doc` (and thus
+// `publish`). Keep fatal warnings for compilation, but not for doc generation.
+Compile / doc / scalacOptions -= "-Xfatal-warnings"
+
 // JVM options for tests (Java 17+ compatibility with Spark)
 Test / fork := true
 
