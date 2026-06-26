@@ -1,6 +1,6 @@
 name := "httpds-spark"
 ThisBuild / organization := "com.amadeus.spark"
-ThisBuild / version := "1.0.0-alpha1"
+ThisBuild / version := "1.0.0-SNAPSHOT"
 
 ThisBuild / scalaVersion := "2.12.18"
 
@@ -102,39 +102,32 @@ releaseProcess := Seq[ReleaseStep](
 releaseCommitMessage := s"chore(release): set version to ${(ThisBuild / version).value} [skip ci]"
 releaseNextCommitMessage := s"chore(release): bump version to ${(ThisBuild / version).value} [skip ci]"
 
-// Artifactory credentials
+// Publishing is environment-driven so the same build serves the public
+// GitHub Packages release and any internal mirror, without hardcoding internal
+// infrastructure here. To target a different repository at publish time, export:
+//   PUBLISH_REPO_URL   - target Maven repo URL (e.g. a snapshot/release repo)
+//   PUBLISH_REPO_NAME  - optional display name for that repo
+//   PUBLISH_REALM / PUBLISH_HOST / PUBLISH_USER / PUBLISH_PASSWORD - credentials
+// When unset, publishing defaults to GitHub Packages.
 ThisBuild / credentials ++= {
-  val artifactoryUser = sys.env.get("ARTIFACTORY_USER").orElse(sys.env.get("ARTIFACTORY_DEV_USER"))
-  val artifactoryPassword = sys.env.get("ARTIFACTORY_PASSWORD").orElse(sys.env.get("ARTIFACTORY_DEV_PASSWORD"))
-  
-  (artifactoryUser, artifactoryPassword) match {
-    case (Some(user), Some(password)) =>
-      Seq(Credentials("Artifactory Realm", "repository.rnd.amadeus.net", user, password))
-    case _ =>
-      // Fallback to GitHub Packages if Artifactory credentials not available
-      if (sys.env.contains("GITHUB_REGISTRY_TOKEN")) {
-        Seq(Credentials("GitHub Package Registry", "maven.pkg.github.com", "", sys.env("GITHUB_REGISTRY_TOKEN")))
-      } else {
-        Seq.empty
-      }
+  val envCreds = for {
+    realm <- sys.env.get("PUBLISH_REALM")
+    host  <- sys.env.get("PUBLISH_HOST")
+    user  <- sys.env.get("PUBLISH_USER")
+    pass  <- sys.env.get("PUBLISH_PASSWORD")
+  } yield Credentials(realm, host, user, pass)
+
+  envCreds match {
+    case Some(c) => Seq(c)
+    case None    => Seq(Credentials("GitHub Package Registry", "maven.pkg.github.com", "", sys.env.getOrElse("GITHUB_REGISTRY_TOKEN", "")))
   }
 }
 
 // PUBLISH SETUP (Maven style)
 ThisBuild / publishTo := {
-  val isAlpha = version.value.contains("alpha")
-  // Use repository.rnd.amadeus.net - same as other ABFD projects
-  val artifactoryBase = "https://repository.rnd.amadeus.net"
-  
-  if (sys.env.contains("ARTIFACTORY_USER") || sys.env.contains("ARTIFACTORY_DEV_USER")) {
-    if (isAlpha || version.value.endsWith("-SNAPSHOT")) {
-      Some("Artifactory Snapshots" at s"$artifactoryBase/mvn-built/")
-    } else {
-      Some("Artifactory Releases" at s"$artifactoryBase/mvn-production/")
-    }
-  } else {
-    // Fallback to GitHub Packages
-    Some("GitHub Packages" at "https://maven.pkg.github.com/AmadeusITGroup/httpds-spark")
+  sys.env.get("PUBLISH_REPO_URL") match {
+    case Some(url) => Some(sys.env.getOrElse("PUBLISH_REPO_NAME", "Internal Repository") at url)
+    case None      => Some("GitHub Packages" at "https://maven.pkg.github.com/AmadeusITGroup/httpds-spark")
   }
 }
 
