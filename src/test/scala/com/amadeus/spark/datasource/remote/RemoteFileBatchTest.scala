@@ -22,7 +22,7 @@ class RemoteFileBatchTest extends AnyFunSpec with Matchers with SparkTestBase {
 
       // Create DataFrame using the data source with mock client
       val result = spark.read
-        .format("rest-file")
+        .format("httpds")
         .option("uri", "http://localhost:5000")
         .option("remoteClient", "mock")
         .option("numPartitions", "2") // Use 2 partitions to distribute files

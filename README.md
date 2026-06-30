@@ -37,7 +37,7 @@ It supports both **batch** and **streaming (micro-batch)** modes, and is designe
 
 ```scala
 val df = spark.read
-  .format("rest-file")
+  .format("httpds")
   .option("remoteClient", "my-client")
   .option("uri", "https://files.example.com/api/v1")
   .option("partitions", "8")
@@ -148,7 +148,7 @@ All options are passed via `.option(key, value)` on the DataFrameReader/StreamRe
 
 ```scala
 val df = spark.read
-  .format("rest-file")
+  .format("httpds")
   .option("remoteClient", "my-client")
   .option("uri", "https://files.example.com/api/v1")
   .option("apiKey", sys.env("API_KEY"))
@@ -166,7 +166,7 @@ df.show()
 
 ```scala
 val stream = spark.readStream
-  .format("rest-file")
+  .format("httpds")
   .option("remoteClient", "my-client")
   .option("uri", "https://files.example.com/api/v1")
   .option("apiKey", sys.env("API_KEY"))
@@ -269,7 +269,7 @@ com.example.myclient.MyRemoteClient
 
 ```scala
 spark.read
-  .format("rest-file")
+  .format("httpds")
   .option("remoteClient", "my-client")   // matches shortName()
   .option("uri", "https://my-server.example.com")
   .load()
@@ -305,7 +305,7 @@ spark.read
 
 | Component                        | Description                                               |
 |----------------------------------|-----------------------------------------------------------|
-| `RemoteFileTableProvider`        | Entry point; registered as the `rest-file` format         |
+| `RemoteFileTableProvider`        | Entry point; registered as the `httpds` format         |
 | `RemoteFileBatch`                | Plans partitions and distributes files round-robin        |
 | `RemoteMicroBatchStream`         | Tracks offsets and polls for new files                    |
 | `RemoteFilePartitionReader`      | Synchronous per-partition file download and row emission  |

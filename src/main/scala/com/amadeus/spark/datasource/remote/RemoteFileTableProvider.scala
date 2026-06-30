@@ -15,7 +15,7 @@ import java.util
 class RemoteFileTableProvider extends TableProvider with DataSourceRegister with Logging {
 
   /**
-   * Short name used in .format("rest-file").
+   * Short name used in .format("httpds").
    *
    * @return the short name for this data source
    */
@@ -60,6 +60,6 @@ class RemoteFileTableProvider extends TableProvider with DataSourceRegister with
  */
 private object RemoteFileTableProvider {
 
-  /** Short name for the data source, used in .format("rest-file") */
-  private val SHORT_NAME: String = "rest-file"
+  /** Short name for the data source, used in .format("httpds") */
+  private val SHORT_NAME: String = "httpds"
 }
