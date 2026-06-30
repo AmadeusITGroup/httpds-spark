@@ -28,7 +28,7 @@ class RemoteFileStreamingTest extends AnyFunSpec with Matchers with SparkTestBas
       try {
         // Create streaming DataFrame
         val streamDf = spark.readStream
-          .format("rest-file")
+          .format("httpds")
           .option("uri", "http://localhost:5000")
           .option("remoteClient", "mock")
           .option("maxFilesPerTrigger", "2")
