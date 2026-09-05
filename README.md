@@ -31,6 +31,7 @@ It supports both **batch** and **streaming (micro-batch)** modes, and is designe
 - [Metrics](#metrics)
 - [Building & Testing](#building--testing)
 - [Contributing](#contributing)
+- [Maintainers](#maintainers)
 - [License](#license)
 
 ## Quick Start
@@ -357,6 +358,13 @@ Tests use [ScalaTest](https://www.scalatest.org/) and [WireMock](https://wiremoc
 ## Contributing
 
 Contributions are welcome! Please read the [Contributing Guide](CONTRIBUTING.md) and [Code of Conduct](CODE_OF_CONDUCT.md) before submitting a pull request.
+
+## Maintainers
+
+- Simone DE SANTIS ([@sdeswork](https://github.com/sdeswork))
+- Guillaume LECLERC ([@guleclerc](https://github.com/guleclerc))
+
+See [.github/CODEOWNERS](.github/CODEOWNERS) for review ownership, and [SECURITY.md](SECURITY.md) to report vulnerabilities.
 
 ## License
 

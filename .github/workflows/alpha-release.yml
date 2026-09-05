@@ -4,6 +4,13 @@ name: "Alpha Release"
 # Amadeus Artifactory. It supplies the publish target to the (public, generic)
 # build.sbt purely via PUBLISH_* environment variables, so no internal
 # infrastructure is referenced in any file shared with the public repo.
+#
+# TODO(open-source-readiness): this workflow references an internal hostname
+# (repository.rnd.amadeus.net) and a self-hosted Amadeus runner
+# (gmsshr-maven-amadeus-cplatform). It must be reviewed for provenance/legal
+# clearance and likely removed or moved to a private overlay before the
+# repository is made public. See open-source readiness report, Priority 0
+# item 4 ("Complete the publication-boundary review").
 
 on:
   push:

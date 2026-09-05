@@ -390,7 +390,7 @@ class RemoteFileDataSourceOptionsTest extends AnyFunSpec with Matchers {
 
     it("should include all important configuration values") {
       val config = createValidConfig().copy(
-        remoteClient = "imperva",
+        remoteClient = "example-client",
         serverUri = "http://test-server:8080",
         pollingInterval = Duration(20, SECONDS),
         maxFilesPerTrigger = 50,
@@ -400,7 +400,7 @@ class RemoteFileDataSourceOptionsTest extends AnyFunSpec with Matchers {
       )
       val logString = config.toLogString
 
-      logString should include("imperva")
+      logString should include("example-client")
       logString should include("http://test-server:8080")
       logString should include("20")
       logString should include("50")

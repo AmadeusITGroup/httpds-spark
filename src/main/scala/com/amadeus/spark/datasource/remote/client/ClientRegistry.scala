@@ -11,10 +11,9 @@ import scala.collection.JavaConverters.iterableAsScalaIterableConverter
  */
 object ClientRegistry extends Logging {
 
-  /** Prefixes to identify internal clients (open-source framework + private imperva implementation). */
+  /** Prefixes to identify internal (first-party) clients bundled with this project. */
   private val INTERNAL_CLIENT_PREFIXES: Set[String] = Set(
-    "com.amadeus.spark.datasource",
-    "com.imperva.spark.datasource"
+    "com.amadeus.spark.datasource"
   )
 
   /**

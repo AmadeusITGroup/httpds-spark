@@ -4,6 +4,12 @@ description: >
   public sbt/setup-sbt@v1 action is blocked by enterprise policy. Installs sbt
   manually, tolerating runners without sudo (assumes pre-installed sbt then).
 
+# TODO(open-source-readiness): this composite action exists only to support
+# the internal alpha-release workflow on self-hosted Amadeus runners. It
+# needs the same provenance/legal review as .github/workflows/alpha-release.yml
+# before publication; remove or isolate into a private overlay if not cleared.
+
+
 inputs:
   java-version:
     description: "Java version to install (Temurin distribution)"

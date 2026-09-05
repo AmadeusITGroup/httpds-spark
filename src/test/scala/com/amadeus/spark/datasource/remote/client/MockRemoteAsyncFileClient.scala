@@ -42,7 +42,7 @@ class MockRemoteAsyncFileClient extends AsyncRemoteFileClient {
         val remoteFile = RemoteFile(filename, timestamp)
         val fileBytes  = content.getBytes("UTF-8")
 
-        // Parse the file using ImpervaLogParser
+        // Parse the file using the test log parser
         val parseResult = TestLogParser.parse(fileBytes)
 
         // Create single RawFileLine for the entire file

@@ -228,7 +228,7 @@ object RemoteFileDataSourceOptions extends Logging {
   val filenameOffsetPattern: Regex = """^file:(.+)$""".r
 
   /**
-   * Creates an ImpervaDataSourceOptions from a Java Map.
+   * Creates a RemoteFileDataSourceOptions from a Java Map.
    *
    * @param options the options map
    * @return a new RemoteFileDataSourceOptions instance
