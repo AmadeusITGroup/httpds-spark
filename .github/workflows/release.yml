@@ -15,6 +15,14 @@ permissions:
   packages: write
   pull-requests: write
 
+env:
+  RELEASE_VERSION: ${{ inputs.release_version }}
+  NEXT_SNAPSHOT_VERSION: ${{ inputs.next_snapshot_version }}
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
 jobs:
   validate-inputs:
     name: "Validate inputs"
@@ -22,12 +30,12 @@ jobs:
     steps:
       - name: "Validate release_version"
         run: |
-          echo "${{ inputs.release_version }}" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' \
+          [[ "$RELEASE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] \
             || { echo "❌ release_version must be a semver string (e.g. 1.1.0)"; exit 1; }
 
       - name: "Validate next_snapshot_version"
         run: |
-          echo "${{ inputs.next_snapshot_version }}" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+-SNAPSHOT$' \
+          [[ "$NEXT_SNAPSHOT_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+-SNAPSHOT$ ]] \
             || { echo "❌ next_snapshot_version must be a semver SNAPSHOT string (e.g. 1.2.0-SNAPSHOT)"; exit 1; }
 
   quality-gates:
@@ -35,7 +43,7 @@ jobs:
     needs: [validate-inputs]
     uses: ./.github/workflows/quality-gates.yml
     with:
-      artifact-name: release-artefacts
+      artifact-name: release-check-artefacts
     permissions:
       contents: read
       checks: write
@@ -50,6 +58,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: ./.github/actions/setup-sbt
         with:
@@ -63,10 +73,7 @@ jobs:
 
       - name: "Run sbt-release"
         run: |
-          sbt \
-            "release with-defaults" \
-            "releaseVersion=${{ inputs.release_version }}" \
-            "nextVersion=${{ inputs.next_snapshot_version }}"
+          sbt "release with-defaults release-version $RELEASE_VERSION next-version $NEXT_SNAPSHOT_VERSION"
 
       - name: "Publish summary"
         run: |
@@ -98,12 +105,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: refs/tags/v${{ inputs.release_version }}
           fetch-depth: 0
 
-      - name: "Download release artefacts"
-        uses: actions/download-artifact@v4
+      - uses: ./.github/actions/setup-sbt
         with:
-          name: release-artefacts
+          java-version: "11"
+          sbt-runner-version: "1.12.12"
+
+      - name: "Build release artefacts from tag"
+        run: |
+          sbt clean package
+          RELEASE_JAR="target/scala-2.12/httpds-spark_2.12-${RELEASE_VERSION}.jar"
+          test -f "$RELEASE_JAR"
+          tar cf artefacts.tar "$RELEASE_JAR"
 
       - name: "Determine previous tag"
         id: prev-tag
@@ -120,12 +135,14 @@ jobs:
           PREV_TAG="${{ steps.prev-tag.outputs.tag }}"
           if [ -n "$PREV_TAG" ]; then
             gh release create "v${{ inputs.release_version }}" \
+              --verify-tag \
               --title "v${{ inputs.release_version }}" \
               --generate-notes \
               --notes-start-tag "$PREV_TAG" \
               artefacts.tar
           else
             gh release create "v${{ inputs.release_version }}" \
+              --verify-tag \
               --title "v${{ inputs.release_version }}" \
               --generate-notes \
               artefacts.tar
