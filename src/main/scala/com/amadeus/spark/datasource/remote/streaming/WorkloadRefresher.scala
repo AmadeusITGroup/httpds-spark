@@ -71,6 +71,7 @@ class WorkloadRefresher(config: RemoteFileDataSourceOptions) extends WorkloadRef
     logDebug(s"  Total discovered files: ${discoveredFiles.size}")
     logDebug(s"  Available files: ${filesNotProcessed.size}")
 
+    // Intentionally retain processed names only while listed; forgotten files may be processed again if they reappear.
     val filesToProcess            = filesNotProcessed.take(maxFiles).map(_.name)
     val filesStillListedProcessed = lastIndexFiles.map(_.name).filter(f => previouslyProcessedFiles.contains(f))
     val fullFileList              = filesToProcess ++ filesStillListedProcessed
