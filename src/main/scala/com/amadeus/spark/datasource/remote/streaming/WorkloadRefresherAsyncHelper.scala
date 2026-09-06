@@ -56,16 +56,11 @@ trait WorkloadRefresherAsyncHelper extends Logging {
   protected def fetchFilesAsyncFromServer(asyncClient: AsyncRemoteFileClient): Seq[RemoteFile] = {
     logDebug("  fetchFilesFromServer: Using async mode with AsyncRemoteFileClient")
 
-    try {
-      val future = asyncClient.listLogFilesAsync()
-      val files  = Await.result(future, 30.seconds)
-      logDebug(s"  fetchFilesFromServer: Async fetched ${files.size} files from API")
-      files
-    } catch {
-      case e: Exception =>
-        logWarning(s"  fetchFilesFromServer: Error fetching files asynchronously: ${e.getMessage}")
-        Seq.empty
-    }
+    // Snapshot discovery must fail rather than cache an empty AvailableNow snapshot or latest-mode initial offset.
+    val future = asyncClient.listLogFilesAsync()
+    val files  = Await.result(future, 30.seconds)
+    logDebug(s"  fetchFilesFromServer: Async fetched ${files.size} files from API")
+    files
   }
 
   /**

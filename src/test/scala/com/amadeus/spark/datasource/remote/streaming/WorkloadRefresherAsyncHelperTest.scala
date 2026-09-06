@@ -91,13 +91,12 @@ class WorkloadRefresherAsyncHelperTest extends AnyFunSpec with Matchers {
       result shouldEqual expected
     }
 
-    it("should return an empty sequence when the async client fails") {
+    it("should propagate discovery failures instead of returning an empty sequence") {
       val client = new FailingAsyncClient
       val helper = new TestHelper()
 
-      val result = helper.testFetchFilesAsyncFromServer(client)
-
-      result shouldBe empty
+      val error = intercept[RuntimeException](helper.testFetchFilesAsyncFromServer(client))
+      error.getMessage shouldBe "network error"
     }
   }
 
