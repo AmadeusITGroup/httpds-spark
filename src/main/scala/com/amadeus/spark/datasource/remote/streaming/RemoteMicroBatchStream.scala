@@ -64,9 +64,10 @@ class RemoteMicroBatchStream(schema: StructType, options: CaseInsensitiveStringM
    */
   override def initialOffset(): Offset = {
 
-    config.startOffset.toLowerCase match {
-      case "earliest"                                                       => RemoteFileOffset.INITIAL
-      case "latest"                                                         => cacheOffset()
+    // Normalize mode keywords only: filenames are case-sensitive and the requested file is inclusive.
+    config.startOffset match {
+      case mode if mode.equalsIgnoreCase("earliest")                        => RemoteFileOffset.INITIAL
+      case mode if mode.equalsIgnoreCase("latest")                          => cacheOffset()
       case RemoteFileDataSourceOptions.filenameOffsetPattern(startFilename) => cacheOffset(f => f < startFilename)
       case _                                                                =>
         // This should never happen due to validation in RemoteFileDataSourceOptions
