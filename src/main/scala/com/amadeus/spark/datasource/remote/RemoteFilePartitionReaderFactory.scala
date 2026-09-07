@@ -44,7 +44,6 @@ class RemoteFilePartitionReaderFactory(schema: StructType, options: CaseInsensit
     if (parsedOptions.asyncDownloads) {
       AsyncRemoteFilePartitionReader(
         schema = schema,
-        optionsMap = optionsMap,
         parsedOptions = parsedOptions,
         restFilePartition = restFilePartition
       )

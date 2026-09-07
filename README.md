@@ -99,7 +99,7 @@ All options are passed via `.option(key, value)` on the DataFrameReader/StreamRe
 
 | Option               | Default | Description                                                 |
 |----------------------|---------|-------------------------------------------------------------|
-| `connectionTimeout`  | `30s`   | HTTP connection timeout (`ms`, `s`, `m` suffixes supported) |
+| `connectTimeout`     | `30s`   | HTTP connection timeout (`ms`, `s`, `m` suffixes supported); `connectionTimeout` is an alias |
 | `readTimeout`        | `60s`   | HTTP read timeout                                           |
 | `maxRetries`         | `3`     | Maximum retry attempts for failed requests                  |
 | `retryDelay`         | `1s`    | Delay between retries                                       |
@@ -136,6 +136,10 @@ All options are passed via `.option(key, value)` on the DataFrameReader/StreamRe
 | `asyncPrefetchSize`    | `20`    | Number of files to prefetch ahead           |
 | `asyncDownloadThreads` | `4`     | Size of the async download thread pool      |
 | `asyncListFiles`       | `false` | List files asynchronously in the background |
+
+Async executor resources are shared by tasks with the same `asyncDownloadThreads` and `connectTimeout` values. Different settings use separate pools, retained until executor shutdown. Avoid generating many distinct configurations in a long-lived executor.
+
+Legacy options `spark.remoteFile.asyncDownload.threads` and `spark.remoteFile.connectionTimeout` (milliseconds) remain accepted. Canonical options take precedence; for timeouts, precedence is `connectTimeout`, then `connectionTimeout`, then the legacy option. The defaults are 4 threads and 30 seconds for all readers.
 
 ### Other
 

@@ -7,7 +7,6 @@ import org.apache.spark.TaskContext
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.types.StructType
 
-import java.util
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
@@ -308,15 +307,14 @@ object AsyncRemoteFilePartitionReader extends Logging {
 
   def apply(
       schema: StructType,
-      optionsMap: util.Map[String, String],
       parsedOptions: RemoteFileDataSourceOptions,
       restFilePartition: RemoteFileInputPartition
   ): AsyncRemoteFilePartitionReader = {
     logDebug(s"[READER-FACTORY] Creating AsyncRemoteFilePartitionReader for partition $restFilePartition")
 
-    // Get shared resources from executor (one ExecutionContext + one HttpClient per executor)
-    val executionContext = ExecutorAsyncResources.getExecutionContext(optionsMap)
-    val httpClient       = ExecutorAsyncResources.getHttpClient(optionsMap)
+    // Use the same parsed configuration as the reader and share only compatible executor resources.
+    val executionContext = ExecutorAsyncResources.getExecutionContext(parsedOptions)
+    val httpClient       = ExecutorAsyncResources.getHttpClient(parsedOptions)
     logDebug("[READER-FACTORY] Obtained shared ExecutionContext and HttpClient from ExecutorAsyncResources")
 
     // Create client

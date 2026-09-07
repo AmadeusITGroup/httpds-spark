@@ -7,6 +7,10 @@ import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 
 import java.util
+import java.net.http.HttpClient
+import java.util.concurrent.ThreadPoolExecutor
+import java.util.concurrent.atomic.AtomicReference
+import scala.concurrent.ExecutionContext
 
 // Spark/Java API reflection tests require asInstanceOf casts for type-erased Java generics
 // scalafix:off DisableSyntax.asInstanceOf
@@ -14,11 +18,12 @@ class RemoteFilePartitionReaderFactoryTest extends AnyFunSpec with Matchers {
 
   private val schema = RemoteFileFormat.SCHEMA
 
-  private def optionsMap(async: Boolean, remoteClientName: String = "mock"): CaseInsensitiveStringMap = {
+  private def optionsMap(async: Boolean, remoteClientName: String = "mock", extra: Map[String, String] = Map.empty): CaseInsensitiveStringMap = {
     val map = new util.HashMap[String, String]()
     map.put("remoteClient", remoteClientName)
     map.put("uri", "http://localhost:8080")
     map.put("asyncDownloads", async.toString)
+    extra.foreach { case (key, value) => map.put(key, value) }
     new CaseInsensitiveStringMap(map)
   }
 
@@ -39,6 +44,26 @@ class RemoteFilePartitionReaderFactoryTest extends AnyFunSpec with Matchers {
   }
 
   describe("createReader") {
+
+    it("passes public settings to clients and isolates different query configurations") {
+      val readers = Seq(
+        Map("ASYNCDOWNLOADTHREADS" -> "2", "CONNECTTIMEOUT"    -> "5s"),
+        Map("asyncDownloadThreads" -> "3", "connectionTimeout" -> "7s"),
+        Map("asyncDownloadThreads" -> "2", "connectTimeout"    -> "5000ms")
+      ).map { extra =>
+        val factory = new RemoteFilePartitionReaderFactory(schema, optionsMap(async = true, remoteClientName = classOf[ResourceCapturingClient].getName, extra = extra))
+        factory.createReader(RemoteFileInputPartition(Seq.empty))
+      }
+      try {
+        val clients = readers.map(reader => getField[ResourceCapturingClient](reader, "asyncClient").receivedClient.get())
+        clients(0).connectTimeout().get().toMillis shouldBe 5000L
+        clients(0).executor().get().asInstanceOf[ThreadPoolExecutor].getCorePoolSize shouldBe 2
+        clients(1).connectTimeout().get().toMillis shouldBe 7000L
+        clients(1).executor().get().asInstanceOf[ThreadPoolExecutor].getCorePoolSize shouldBe 3
+        clients(1) should not be theSameInstanceAs(clients(0))
+        clients(2) shouldBe theSameInstanceAs(clients(0))
+      } finally readers.foreach(_.close())
+    }
 
     it("returns a RemoteFilePartitionReader when asyncDownloads is false") {
       val factory   = new RemoteFilePartitionReaderFactory(schema, optionsMap(async = false))
@@ -83,3 +108,8 @@ class RemoteFilePartitionReaderFactoryTest extends AnyFunSpec with Matchers {
 }
 
 // scalafix:on DisableSyntax.asInstanceOf
+
+class ResourceCapturingClient extends MockRemoteAsyncFileClient {
+  val receivedClient                                                                       = new AtomicReference[HttpClient]()
+  override def initAsync(executionContext: ExecutionContext, httpClient: HttpClient): Unit = receivedClient.set(httpClient)
+}

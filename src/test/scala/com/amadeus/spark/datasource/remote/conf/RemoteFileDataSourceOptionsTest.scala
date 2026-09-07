@@ -20,6 +20,22 @@ class RemoteFileDataSourceOptionsTest extends AnyFunSpec with Matchers {
 
   describe("RemoteFileDataSourceOptions.fromMap") {
 
+    it("should resolve public async options and legacy aliases with canonical precedence") {
+      val base         = Map("uri" -> "http://localhost:5000", "remoteClient" -> "mock")
+      val legacy       = Map("spark.remoteFile.connectionTimeout" -> "5000", "spark.remoteFile.asyncDownload.threads" -> "2")
+      val legacyConfig = RemoteFileDataSourceOptions.fromMap((base ++ legacy).asJava)
+      legacyConfig.connectionTimeout shouldBe Duration(5, SECONDS)
+      legacyConfig.asyncDownloadThreads shouldBe 2
+
+      val alias = RemoteFileDataSourceOptions.fromMap((base ++ legacy + ("CONNECTIONTIMEOUT" -> "6s")).asJava)
+      alias.connectionTimeout shouldBe Duration(6, SECONDS)
+
+      val canonical = RemoteFileDataSourceOptions.fromMap((base ++ legacy ++ Map("connectionTimeout" -> "6s", "CONNECTTIMEOUT" -> "7s", "ASYNCDOWNLOADTHREADS" -> "3")).asJava)
+      canonical.connectionTimeout shouldBe Duration(7, SECONDS)
+      canonical.asyncDownloadThreads shouldBe 3
+      canonical.toMap("connectTimeout") shouldBe "7 seconds"
+    }
+
     it("should parse basic required options") {
       val options = Map(
         "uri"          -> "http://localhost:5000",

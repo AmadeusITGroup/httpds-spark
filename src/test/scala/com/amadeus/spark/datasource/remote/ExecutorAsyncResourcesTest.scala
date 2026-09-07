@@ -8,6 +8,9 @@ import java.net.http.HttpClient
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.{HashMap => JHashMap}
 import scala.concurrent.ExecutionContext
+import scala.collection.JavaConverters._
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration.DurationInt
 
 /**
  * Unit tests for ExecutorAsyncResources.
@@ -32,10 +35,10 @@ class ExecutorAsyncResourcesTest extends AnyFunSpec with Matchers with BeforeAnd
       executionContext should not be null
       executionContext shouldBe an[ExecutionContext]
 
-      // Verify default thread count is 2x available processors
+      // Defaults match the public datasource options.
       val client   = ExecutorAsyncResources.getHttpClient(config)
       val executor = client.executor().get().asInstanceOf[ThreadPoolExecutor]
-      executor.getCorePoolSize shouldBe Runtime.getRuntime.availableProcessors() * 2
+      executor.getCorePoolSize shouldBe 4
     }
 
     it("should return the same ExecutionContext on subsequent calls") {
@@ -64,7 +67,7 @@ class ExecutorAsyncResourcesTest extends AnyFunSpec with Matchers with BeforeAnd
       val client = ExecutorAsyncResources.getHttpClient(config)
 
       client should not be null
-      client.connectTimeout().get().toMillis shouldBe 10000L
+      client.connectTimeout().get().toMillis shouldBe 30000L
       client.version() shouldBe HttpClient.Version.HTTP_1_1
       client.executor().isPresent shouldBe true
     }
@@ -90,6 +93,14 @@ class ExecutorAsyncResourcesTest extends AnyFunSpec with Matchers with BeforeAnd
 
   describe("shutdown") {
 
+    it("should shut down every configuration pool") {
+      val first  = ExecutorAsyncResources.getHttpClient(Map("asyncDownloadThreads" -> "2").asJava)
+      val second = ExecutorAsyncResources.getHttpClient(Map("asyncDownloadThreads" -> "3").asJava)
+      ExecutorAsyncResources.shutdown()
+      first.executor().get().asInstanceOf[ThreadPoolExecutor].isShutdown shouldBe true
+      second.executor().get().asInstanceOf[ThreadPoolExecutor].isShutdown shouldBe true
+    }
+
     it("should be idempotent - calling shutdown multiple times should not fail") {
       val config = new JHashMap[String, String]()
       ExecutorAsyncResources.getExecutionContext(config)
@@ -111,6 +122,35 @@ class ExecutorAsyncResourcesTest extends AnyFunSpec with Matchers with BeforeAnd
 
     it("should not fail when called without prior initialization") {
       noException should be thrownBy ExecutorAsyncResources.shutdown()
+    }
+  }
+
+  describe("configuration sharing") {
+    it("should normalize equivalent settings and reuse resources despite different query options") {
+      val first  = Map("asyncDownloadThreads" -> "2", "connectTimeout" -> "5s", "uri" -> "http://one").asJava
+      val second = Map("ASYNCDOWNLOADTHREADS" -> "2", "CONNECTIONTIMEOUT" -> "5000ms", "uri" -> "http://two").asJava
+      ExecutorAsyncResources.getHttpClient(first) shouldBe theSameInstanceAs(ExecutorAsyncResources.getHttpClient(second))
+      ExecutorAsyncResources.getExecutionContext(first) shouldBe theSameInstanceAs(ExecutorAsyncResources.getExecutionContext(second))
+    }
+
+    it("should isolate a change to either threads or timeout without replacing existing resources") {
+      val original       = Map("asyncDownloadThreads" -> "2", "connectTimeout" -> "5s").asJava
+      val first          = ExecutorAsyncResources.getHttpClient(original)
+      val threadsChanged = ExecutorAsyncResources.getHttpClient(Map("asyncDownloadThreads" -> "3", "connectTimeout" -> "5s").asJava)
+      val timeoutChanged = ExecutorAsyncResources.getHttpClient(Map("asyncDownloadThreads" -> "2", "connectTimeout" -> "6s").asJava)
+      threadsChanged should not be theSameInstanceAs(first)
+      timeoutChanged should not be theSameInstanceAs(first)
+      threadsChanged.executor().get().asInstanceOf[ThreadPoolExecutor].getCorePoolSize shouldBe 3
+      timeoutChanged.connectTimeout().get().toMillis shouldBe 6000L
+      ExecutorAsyncResources.getHttpClient(original) shouldBe theSameInstanceAs(first)
+      first.executor().get().asInstanceOf[ThreadPoolExecutor].isShutdown shouldBe false
+    }
+
+    it("should create a single shared client under concurrent access") {
+      implicit val executionContext: ExecutionContext = ExecutionContext.global
+      val config                                      = Map("asyncDownloadThreads" -> "2").asJava
+      val clients                                     = Await.result(Future.sequence((1 to 16).map(_ => Future(ExecutorAsyncResources.getHttpClient(config)))), 5.seconds)
+      clients.foreach(_ shouldBe theSameInstanceAs(clients.head))
     }
   }
 }

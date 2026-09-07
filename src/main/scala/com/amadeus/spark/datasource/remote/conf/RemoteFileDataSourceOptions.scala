@@ -227,6 +227,20 @@ object RemoteFileDataSourceOptions extends Logging {
 
   val filenameOffsetPattern: Regex = """^file:(.+)$""".r
 
+  /** Resolves async resource settings consistently for readers and executor resource maps. */
+  private[remote] def asyncSettings(options: CaseInsensitiveStringMap): (Int, Duration) = {
+    val threads = Option(options.get(ASYNC_DOWNLOAD_THREADS))
+      .orElse(Option(options.get("spark.remoteFile.asyncDownload.threads")))
+      .map(_.toInt)
+      .getOrElse(DEFAULT_ASYNC_DOWNLOAD_THREADS)
+    val timeout = Option(options.get(CONNECT_TIMEOUT))
+      .orElse(Option(options.get("connectionTimeout")))
+      .map(Duration(_))
+      .orElse(Option(options.get("spark.remoteFile.connectionTimeout")).map(value => Duration(value.toLong, scala.concurrent.duration.MILLISECONDS)))
+      .getOrElse(DEFAULT_CONNECTION_TIMEOUT)
+    (threads, timeout)
+  }
+
   /**
    * Creates a RemoteFileDataSourceOptions from a Java Map.
    *
@@ -275,10 +289,10 @@ object RemoteFileDataSourceOptions extends Logging {
     }
 
     // Parse durations with support for human-readable formats
-    val pollInterval   = getDuration(POLL_INTERVAL, DEFAULT_POLLING_INTERVAL)
-    val connectTimeout = getDuration(CONNECT_TIMEOUT, DEFAULT_CONNECTION_TIMEOUT)
-    val readTimeout    = getDuration(READ_TIMEOUT, DEFAULT_READ_TIMEOUT)
-    val retryDelay     = getDuration(RETRY_DELAY, DEFAULT_RETRY_DELAY)
+    val pollInterval                      = getDuration(POLL_INTERVAL, DEFAULT_POLLING_INTERVAL)
+    val (downloadThreads, connectTimeout) = asyncSettings(dataSourceOptions)
+    val readTimeout                       = getDuration(READ_TIMEOUT, DEFAULT_READ_TIMEOUT)
+    val retryDelay                        = getDuration(RETRY_DELAY, DEFAULT_RETRY_DELAY)
 
     // Parse other options
     val numPartitions = dataSourceOptions.getInt(PARTITIONS, DEFAULT_NUM_PARTITIONS)
@@ -307,7 +321,7 @@ object RemoteFileDataSourceOptions extends Logging {
       asyncListFiles = dataSourceOptions.getBoolean(ASYNC_LIST_FILES, DEFAULT_ASYNC_LIST_FILES),
       asyncDownloads = dataSourceOptions.getBoolean(ASYNC_DOWNLOADS, DEFAULT_ASYNC_DOWNLOADS),
       asyncPrefetchSize = dataSourceOptions.getInt(ASYNC_PREFETCH_SIZE, DEFAULT_ASYNC_PREFETCH_SIZE),
-      asyncDownloadThreads = dataSourceOptions.getInt(ASYNC_DOWNLOAD_THREADS, DEFAULT_ASYNC_DOWNLOAD_THREADS),
+      asyncDownloadThreads = downloadThreads,
       startOffset = startOffset,
       allOptions = dataSourceOptions
     )
