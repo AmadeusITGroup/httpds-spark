@@ -41,11 +41,7 @@ class RemoteMicroBatchStream(schema: StructType, options: CaseInsensitiveStringM
   // scalafix:on DisableSyntax.var
 
   // Validate streaming configuration
-  private val config: RemoteFileDataSourceOptions = {
-    val configurationOptions = RemoteFileDataSourceOptions.fromMap(options)
-    configurationOptions.validate()
-    configurationOptions
-  }
+  private val config: RemoteFileDataSourceOptions = RemoteFileDataSourceOptions.fromMap(options)
 
   /**
    * Returns the initial offset for this stream.

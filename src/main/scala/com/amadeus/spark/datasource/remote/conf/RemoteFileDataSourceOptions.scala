@@ -64,8 +64,14 @@ case class RemoteFileDataSourceOptions(
     require(numPartitions > 0, s"'${RemoteFileDataSourceOptions.PARTITIONS}' must be positive")
     require(maxRetries >= 0, s"'${RemoteFileDataSourceOptions.MAX_RETRIES}' must be non-negative")
     require(maxFilesPerTrigger > 0, s"'${RemoteFileDataSourceOptions.MAX_FILES}' must be positive")
-    require(serverUri.nonEmpty, s"'${RemoteFileDataSourceOptions.URI}' must not be empty")
-    require(remoteClient.nonEmpty, s"'${RemoteFileDataSourceOptions.REMOTE_CLIENT}' must not be empty")
+    require(Option(serverUri).exists(_.trim.nonEmpty), s"'${RemoteFileDataSourceOptions.URI}' must not be empty")
+    require(Option(remoteClient).exists(_.trim.nonEmpty), s"'${RemoteFileDataSourceOptions.REMOTE_CLIENT}' must not be empty")
+    require(asyncPrefetchSize > 0, "'asyncPrefetchSize' must be positive")
+    require(asyncDownloadThreads > 0, "'asyncDownloadThreads' must be positive")
+    require(connectionTimeout.isFinite && connectionTimeout.toMillis > 0, "'connectTimeout' must be finite and at least 1ms")
+    require(readTimeout.isFinite && readTimeout > Duration.Zero, "'readTimeout' must be finite and positive")
+    require(pollingInterval.isFinite && pollingInterval >= Duration.Zero, "'pollInterval' must be finite and non-negative")
+    require(retryDelay.isFinite && retryDelay >= Duration.Zero, "'retryDelay' must be finite and non-negative")
 
     validateUriFormat()
   }
@@ -326,7 +332,9 @@ object RemoteFileDataSourceOptions extends Logging {
       allOptions = dataSourceOptions
     )
 
-    // Log the parsed configuration at INFO level
+    config.validate()
+
+    // Log the validated configuration at DEBUG level
     logDebug(config.toLogString)
 
     config

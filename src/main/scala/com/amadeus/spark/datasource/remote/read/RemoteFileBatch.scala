@@ -9,6 +9,8 @@ import org.apache.spark.sql.connector.read.{Batch, InputPartition, PartitionRead
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.util.CaseInsensitiveStringMap
 
+import scala.util.control.NonFatal
+
 /**
  * Batch implementation for remote file data source.
  *
@@ -19,9 +21,6 @@ class RemoteFileBatch(schema: StructType, options: CaseInsensitiveStringMap) ext
 
   /** Configuration options parsed from the provided map. */
   private val config: RemoteFileDataSourceOptions = RemoteFileDataSourceOptions.fromMap(options)
-
-  /** remote file client for interacting with the remote endpoint. */
-  private lazy val client: RemoteFileClient = RemoteFileClient.from(config)
 
   /**
    * Plans input partitions for parallel processing.
@@ -38,7 +37,17 @@ class RemoteFileBatch(schema: StructType, options: CaseInsensitiveStringMap) ext
   override def planInputPartitions(): Array[InputPartition] = {
     logDebug(s"Planning batch read with max ${config.numPartitions} partitions")
 
-    val files = client.listAndSortLogFiles()
+    // Planning can run repeatedly. Materialize the listing before closing this call's client.
+    val client = RemoteFileClient.from(config)
+    val files =
+      try {
+        client.listAndSortLogFiles().toVector
+      } finally {
+        try client.close()
+        catch {
+          case NonFatal(e) => logWarning("Error closing batch listing client", e)
+        }
+      }
 
     if (files.isEmpty) {
       logWarning("No log files found on server")

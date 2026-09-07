@@ -88,6 +88,8 @@ libraryDependencies += "com.amadeus.spark" %% "httpds-spark" % "1.0.0-SNAPSHOT"
 
 All options are passed via `.option(key, value)` on the DataFrameReader/StreamReader.
 
+Options are validated before batch or streaming execution. Partition, trigger-file, prefetch, and download-thread counts must be positive; retries must be non-negative. Durations must be finite: `connectTimeout` must be at least 1ms and `readTimeout` positive; `pollInterval` and `retryDelay` may be zero for immediate polling or retrying.
+
 ### Required
 
 | Option         | Description                                                             |
