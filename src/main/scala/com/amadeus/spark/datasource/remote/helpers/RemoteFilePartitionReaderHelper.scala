@@ -14,7 +14,7 @@ import scala.util.control.NonFatal
 
 /**
  * Abstract helper class for RemoteFilePartitionReader to handle common logic of iterating through files,
- * downloading with retry logic, and managing memory cleanup.
+ * handling download results, and managing memory cleanup. HTTP retries are the client's responsibility.
  *
  * This class provides a structured way to implement the core functionality of reading from remote files
  * while allowing concrete implementations to focus on the specifics of downloading and client management.
@@ -53,7 +53,7 @@ abstract class RemoteFilePartitionReaderHelper(schema: StructType, partition: Re
    *
    * This method handles:
    * 1. Iterating through files assigned to this partition
-   * 2. Downloading files using the client with retry logic
+   * 2. Downloading files using the client (which owns any retry logic)
    * 3. Iterating through log lines within each file
    *
    * @return true if there is a next record, false otherwise

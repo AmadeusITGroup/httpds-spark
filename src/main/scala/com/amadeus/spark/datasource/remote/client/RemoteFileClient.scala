@@ -8,6 +8,11 @@ import scala.util.Try
 
 /**
  * Client interface for interacting with remote-based file sources.
+ *
+ * Implementations own request construction, authentication, HTTP request timeouts,
+ * retries/backoff, TLS requirements, and response parsing. The framework parses and
+ * passes options but does not implement these request-level policies. Document supported
+ * options and reject unsupported security settings rather than silently ignoring them.
  */
 trait RemoteFileClient extends RemoteFileClientRegister with Serializable with Logging {
 

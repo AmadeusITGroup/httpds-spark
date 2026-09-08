@@ -99,22 +99,30 @@ Options are validated before batch or streaming execution. Partition, trigger-fi
 
 ### HTTP
 
+These options are parsed and passed to the selected client; validation does not guarantee that the client implements them. The framework configures `connectTimeout` on its driver/executor async HTTP clients, but does not add authentication, retries, or custom trust stores. Consult your client's documentation for supported options.
+
 | Option               | Default | Description                                                 |
 |----------------------|---------|-------------------------------------------------------------|
 | `connectTimeout`     | `30s`   | HTTP connection timeout (`ms`, `s`, `m` suffixes supported); `connectionTimeout` is an alias |
-| `readTimeout`        | `60s`   | HTTP read timeout                                           |
-| `maxRetries`         | `3`     | Maximum retry attempts for failed requests                  |
-| `retryDelay`         | `1s`    | Delay between retries                                       |
-| `enableSsl`          | `false` | Enable SSL/TLS                                              |
-| `trustStorePath`     | —       | Path to a custom trust store (JKS/PEM)                      |
-| `trustStorePassword` | —       | Password for the trust store                                |
+| `readTimeout`        | `60s`   | Requested HTTP read timeout; the client must apply it to requests |
+| `maxRetries`         | `3`     | Requested maximum retries; the client must implement retry behavior |
+| `retryDelay`         | `1s`    | Requested delay between retries; client-managed             |
+| `enableSsl`          | `false` | Client-specific TLS option; does not toggle TLS in the framework |
+| `trustStorePath`     | —       | Client-specific trust-store path; supported formats depend on the client |
+| `trustStorePassword` | —       | Client-specific trust-store password                       |
+
+The async partition reader also uses twice `readTimeout` when waiting for a download to complete. This is a reader wait limit, not an HTTP request timeout or a guarantee of request cancellation; async discovery has separate fixed wait limits.
+
+Framework-created HTTP clients use JVM-default TLS configuration and the request URI scheme. `enableSsl` does not rewrite `http://` to `https://`, and `trustStorePath` / `trustStorePassword` do not configure these shared clients. A client requiring custom trust must explicitly support an appropriate TLS configuration; do not assume that setting these options is sufficient.
 
 ### Authentication
 
 | Option      | Default | Description                                   |
 |-------------|---------|-----------------------------------------------|
-| `apiKey`    | —       | API key (sent as HTTP Basic auth username)    |
-| `apiSecret` | —       | API secret (sent as HTTP Basic auth password) |
+| `apiKey`    | —       | Credential passed to the client; authentication scheme is client-defined |
+| `apiSecret` | —       | Credential passed to the client; authentication scheme is client-defined |
+
+The framework does not send these credentials or install an HTTP authenticator. Basic auth, bearer tokens, custom headers, and credential handling are responsibilities of the selected client.
 
 ### Parallelism
 
@@ -153,6 +161,8 @@ Legacy options `spark.remoteFile.asyncDownload.threads` and `spark.remoteFile.co
 
 ### Batch Mode
 
+The authentication and TLS options below are illustrative and require support from `my-client`.
+
 ```scala
 val df = spark.read
   .format("httpds")
@@ -170,6 +180,8 @@ df.show()
 ```
 
 ### Streaming Mode
+
+This example requires `my-client` to implement authentication and `AsyncRemoteFileClient`.
 
 ```scala
 val stream = spark.readStream
@@ -222,6 +234,8 @@ root
 ## Implementing a Custom Client
 
 To integrate a new HTTP-based file source, implement the `RemoteFileClient` trait and register it via Java `ServiceLoader`.
+
+Client implementations own HTTP request construction, authentication, request timeouts, retries/backoff, and response parsing. Document which options they honor and reject unsupported security settings rather than silently ignoring them. Async clients receive framework-managed resources with the configuration described above; receiving those resources does not implement request-level policies automatically.
 
 ### 1. Implement the trait
 

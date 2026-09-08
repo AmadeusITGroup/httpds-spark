@@ -10,17 +10,21 @@ import scala.util.matching.Regex
 /**
  * Configuration options for the Remote File Data Source.
  *
+ * HTTP policy options are passed to clients, which must document and implement support.
+ * Framework-created async HTTP clients apply connectionTimeout only; authentication,
+ * retry policies, and custom trust stores are not configured by this options class.
+ *
  * @param remoteClient       The short name or class name of the remote file client implementation
  * @param apiKey             Optional API key for authentication
  * @param apiSecret          Optional API secret for authentication
  * @param numPartitions      Number of partitions for parallelism
  * @param connectionTimeout  HTTP connection timeout duration
- * @param readTimeout        HTTP read timeout duration
- * @param maxRetries         Maximum number of retries for failed requests
- * @param retryDelay         Delay between retries
- * @param enableSsl          Whether to enable SSL/TLS
- * @param trustStorePath     Optional path to the trust store for SSL
- * @param trustStorePassword Optional password for the trust store
+ * @param readTimeout        Client-managed HTTP read timeout; also doubled for the async reader's download wait limit
+ * @param maxRetries         Requested maximum retries, implemented by the client
+ * @param retryDelay         Requested retry delay, implemented by the client
+ * @param enableSsl          Client-specific TLS option; does not toggle TLS in framework-created HTTP clients
+ * @param trustStorePath     Client-specific trust-store path; not applied to framework-created HTTP clients
+ * @param trustStorePassword Client-specific trust-store password
  * @param serverUri          URI of the remote file server (can be set via "uri" or "path" option)
  * @param sessionId          Optional session ID for isolated scenario state (useful for testing)
  * @param pollingInterval    Interval between polling for new files in streaming mode, it limits only the frequency of index API calls.
