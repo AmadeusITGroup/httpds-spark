@@ -8,8 +8,8 @@ import java.net.http.HttpClient
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.{ExecutorService, Executors, ThreadFactory, TimeUnit}
 import scala.collection.mutable
-import scala.concurrent.{ExecutionContext, ExecutionContextExecutorService}
 import scala.concurrent.duration.Duration
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutorService}
 import scala.util.control.NonFatal
 
 /**

@@ -150,11 +150,12 @@ sbt "testOnly *ClientRegistryTest"   # Run a specific test class
 - The project uses [Scalafmt](https://scalameta.org/scalafmt/) for automatic formatting (config: `.scalafmt.conf`).
 - Max line length: **180 characters**.
 - Docstring style: **JavaDoc**.
+- Scala sources use LF line endings, enforced by `.gitattributes` on all platforms.
 - **All code must be formatted before submitting a PR.** Run formatting manually if needed:
 
   ```bash
   sbt scalafmtAll        # Format main + test sources
-  sbt scalafmtCheck      # Verify formatting (CI-friendly)
+  sbt scalafmtCheckAll   # Verify main + test formatting (CI-friendly)
   ```
 
 ### Auto-formatting Setup
@@ -199,8 +200,8 @@ sbt scalafixAll              # Auto-fix what can be fixed automatically
 **Convenience aliases:**
 
 ```bash
-sbt lint      # scalafmtCheck + scalafixAll --check (full read-only lint)
-sbt lintFix   # scalafmtAll + scalafixAll            (auto-fix everything)
+sbt lint      # scalafmtCheckAll + scalafixAll --check (full read-only lint)
+sbt lintFix   # scalafixAll + scalafmtAll              (fix imports/syntax, then format)
 ```
 
 **Suppressing a rule for legacy or interop code:**

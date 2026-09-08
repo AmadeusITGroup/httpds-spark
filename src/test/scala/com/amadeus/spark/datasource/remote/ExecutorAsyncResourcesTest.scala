@@ -7,10 +7,9 @@ import org.scalatest.matchers.should.Matchers
 import java.net.http.HttpClient
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.{HashMap => JHashMap}
-import scala.concurrent.ExecutionContext
 import scala.collection.JavaConverters._
-import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.DurationInt
+import scala.concurrent.{Await, ExecutionContext, Future}
 
 /**
  * Unit tests for ExecutorAsyncResources.

@@ -1,8 +1,8 @@
 package com.amadeus.spark.datasource.remote.conf
 
-import com.amadeus.spark.datasource.remote.{RemoteFileFormat, RemoteFileInputPartition, RemoteFilePartitionReaderFactory}
 import com.amadeus.spark.datasource.remote.read.RemoteFileBatch
 import com.amadeus.spark.datasource.remote.streaming.RemoteMicroBatchStream
+import com.amadeus.spark.datasource.remote.{RemoteFileFormat, RemoteFileInputPartition, RemoteFilePartitionReaderFactory}
 import org.apache.spark.sql.util.CaseInsensitiveStringMap
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers

@@ -66,8 +66,8 @@ Compile / doc / scalacOptions -= "-Xfatal-warnings"
 Test / fork := true
 
 // Command aliases for linting
-addCommandAlias("lint", "scalafmtCheck; scalafixAll --check")
-addCommandAlias("lintFix", "scalafmtAll; scalafixAll")
+addCommandAlias("lint", "scalafmtCheckAll; scalafixAll --check")
+addCommandAlias("lintFix", "scalafixAll; scalafmtAll")
 Test / javaOptions ++= Seq(
   "--add-opens=java.base/java.lang=ALL-UNNAMED",
   "--add-opens=java.base/java.lang.invoke=ALL-UNNAMED",

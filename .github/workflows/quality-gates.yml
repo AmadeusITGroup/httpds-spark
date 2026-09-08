@@ -32,7 +32,7 @@ jobs:
           sbt-runner-version: "1.12.12"
 
       - name: "Scalafmt check"
-        run: sbt scalafmtCheck
+        run: sbt scalafmtCheckAll
 
       - name: "Scalafix check"
         run: sbt "scalafixAll --check"

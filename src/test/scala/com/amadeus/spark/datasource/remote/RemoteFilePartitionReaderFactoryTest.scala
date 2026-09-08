@@ -6,8 +6,8 @@ import org.apache.spark.sql.util.CaseInsensitiveStringMap
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 
-import java.util
 import java.net.http.HttpClient
+import java.util
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.atomic.AtomicReference
 import scala.concurrent.ExecutionContext
