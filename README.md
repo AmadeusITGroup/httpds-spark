@@ -5,17 +5,16 @@
 [![Scala](https://img.shields.io/badge/Scala-2.12-DC322F?logo=scala&logoColor=white)](https://www.scala-lang.org/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-A generic, extensible **Apache Spark DataSource V2** connector for reading remote files over HTTP/REST.
-It supports both **batch** and **streaming (micro-batch)** modes, and is designed to be pluggable — any HTTP endpoint can be supported by implementing a lightweight client interface.
+Read files from HTTP APIs with Apache Spark, in batch or as a micro-batch stream.
+The connector uses Spark DataSource V2. To connect your file source, implement a small client interface that lists and downloads files.
 
 ## Features
 
-- **Batch & Streaming** — read remote files in batch or as a continuous micro-batch stream
-- **Pluggable clients** — implement a single trait to add support for any HTTP-based file source
-- **Async prefetching** — optional asynchronous download pipeline for higher throughput
-- **Built-in metrics** — custom Spark task metrics (files downloaded, bytes, throughput) visible in the Spark UI
-- **Offset tracking** — streaming mode tracks offsets and supports `earliest`, `latest`, or file-based start positions
-- **ServiceLoader discovery** — client implementations are registered via standard Java `ServiceLoader`
+- **Batch and streaming** — read existing files or keep polling for new ones.
+- **Custom clients** — connect your HTTP API by implementing one Scala trait.
+- **Background downloads** — optionally download files ahead of processing.
+- **Spark UI metrics** — track downloaded files, bytes, and download speed.
+- **Streaming start positions** — start from the first file, new arrivals, or a named file.
 
 ## Table of Contents
 
@@ -35,6 +34,8 @@ It supports both **batch** and **streaming (micro-batch)** modes, and is designe
 - [License](#license)
 
 ## Quick Start
+
+This example assumes you have installed the connector and a client registered as `my-client`. Replace it with your client’s name; see [Implementing a Custom Client](#implementing-a-custom-client) to create one.
 
 ```scala
 val df = spark.read
@@ -64,7 +65,7 @@ df.show()
 sbt package
 ```
 
-The resulting JAR is located in `target/scala-2.12/`. Add it to your Spark application's classpath:
+The JAR is written to `target/scala-2.12/`. Add it to your Spark application's classpath:
 
 ```bash
 spark-submit --jars httpds-spark_2.12-1.0.0-SNAPSHOT.jar ...
@@ -82,13 +83,13 @@ Then add to your `build.sbt`:
 libraryDependencies += "com.amadeus.spark" %% "httpds-spark" % "1.0.0-SNAPSHOT"
 ```
 
-> **Note:** Spark and SLF4J are declared as `Provided` dependencies — they are expected to be available at runtime in your Spark cluster.
+Spark and SLF4J must be available in your Spark cluster; they are declared as `Provided` dependencies.
 
 ## Configuration
 
-All options are passed via `.option(key, value)` on the DataFrameReader/StreamReader.
+Set options with `.option(key, value)` on `spark.read` or `spark.readStream`. They are checked before execution.
 
-Options are validated before batch or streaming execution. Partition, trigger-file, prefetch, and download-thread counts must be positive; retries must be non-negative. Durations must be finite: `connectTimeout` must be at least 1ms and `readTimeout` positive; `pollInterval` and `retryDelay` may be zero for immediate polling or retrying.
+Counts must be positive, except `maxRetries`, which can be zero. Durations must be finite: `connectTimeout` must be at least `1ms`, and `readTimeout` must be greater than zero. `pollInterval` and `retryDelay` can be zero to poll or retry immediately.
 
 ### Required
 
@@ -99,30 +100,30 @@ Options are validated before batch or streaming execution. Partition, trigger-fi
 
 ### HTTP
 
-These options are parsed and passed to the selected client; validation does not guarantee that the client implements them. The framework configures `connectTimeout` on its driver/executor async HTTP clients, but does not add authentication, retries, or custom trust stores. Consult your client's documentation for supported options.
+The connector passes these settings to your client and applies `connectTimeout` to the async HTTP clients it creates. Your client must implement the other settings; check its documentation for support.
 
 | Option               | Default | Description                                                 |
 |----------------------|---------|-------------------------------------------------------------|
 | `connectTimeout`     | `30s`   | HTTP connection timeout (`ms`, `s`, `m` suffixes supported); `connectionTimeout` is an alias |
-| `readTimeout`        | `60s`   | Requested HTTP read timeout; the client must apply it to requests |
-| `maxRetries`         | `3`     | Requested maximum retries; the client must implement retry behavior |
-| `retryDelay`         | `1s`    | Requested delay between retries; client-managed             |
-| `enableSsl`          | `false` | Client-specific TLS option; does not toggle TLS in the framework |
-| `trustStorePath`     | —       | Client-specific trust-store path; supported formats depend on the client |
-| `trustStorePassword` | —       | Client-specific trust-store password                       |
+| `readTimeout`        | `60s`   | HTTP read timeout, applied by your client |
+| `maxRetries`         | `3`     | Maximum retries, implemented by your client |
+| `retryDelay`         | `1s`    | Delay between retries, managed by your client             |
+| `enableSsl`          | `false` | Client-specific TLS setting; does not enable HTTPS by itself |
+| `trustStorePath`     | —       | Trust-store path, if supported by your client |
+| `trustStorePassword` | —       | Trust-store password, if supported by your client                       |
 
-The async partition reader also uses twice `readTimeout` when waiting for a download to complete. This is a reader wait limit, not an HTTP request timeout or a guarantee of request cancellation; async discovery has separate fixed wait limits.
 
-Framework-created HTTP clients use JVM-default TLS configuration and the request URI scheme. `enableSsl` does not rewrite `http://` to `https://`, and `trustStorePath` / `trustStorePassword` do not configure these shared clients. A client requiring custom trust must explicitly support an appropriate TLS configuration; do not assume that setting these options is sufficient.
+
+The connector’s HTTP clients use the JVM’s default TLS settings and the URL’s `http://` or `https://` scheme. `enableSsl` does not change the URL to HTTPS. Custom trust stores require client support: setting `trustStorePath` and `trustStorePassword` alone does not configure the shared HTTP clients.
 
 ### Authentication
 
 | Option      | Default | Description                                   |
 |-------------|---------|-----------------------------------------------|
-| `apiKey`    | —       | Credential passed to the client; authentication scheme is client-defined |
-| `apiSecret` | —       | Credential passed to the client; authentication scheme is client-defined |
+| `apiKey`    | —       | Credential for your client |
+| `apiSecret` | —       | Credential for your client |
 
-The framework does not send these credentials or install an HTTP authenticator. Basic auth, bearer tokens, custom headers, and credential handling are responsibilities of the selected client.
+Your client decides how to send these credentials, such as through basic auth, bearer tokens, or custom headers. The connector does not send them automatically.
 
 ### Parallelism
 
@@ -142,14 +143,19 @@ The framework does not send these credentials or install an HTTP authenticator. 
 
 | Option                 | Default | Description                                 |
 |------------------------|---------|---------------------------------------------|
-| `asyncDownloads`       | `false` | Enable async prefetch download pipeline     |
-| `asyncPrefetchSize`    | `20`    | Number of files to prefetch ahead           |
-| `asyncDownloadThreads` | `4`     | Size of the async download thread pool      |
+| `asyncDownloads`       | `false` | Download files ahead of processing     |
+| `asyncPrefetchSize`    | `20`    | Number of files to download ahead           |
+| `asyncDownloadThreads` | `4`     | Number of background download threads      |
 | `asyncListFiles`       | `false` | List files asynchronously in the background |
 
-Async executor resources are shared by tasks with the same `asyncDownloadThreads` and `connectTimeout` values. Different settings use separate pools, retained until executor shutdown. Avoid generating many distinct configurations in a long-lived executor.
+Tasks with the same `asyncDownloadThreads` and `connectTimeout` share async resources. Each different pair creates a separate pool that stays open until the executor stops, so avoid using many combinations in a long-running executor.
 
-Legacy options `spark.remoteFile.asyncDownload.threads` and `spark.remoteFile.connectionTimeout` (milliseconds) remain accepted. Canonical options take precedence; for timeouts, precedence is `connectTimeout`, then `connectionTimeout`, then the legacy option. The defaults are 4 threads and 30 seconds for all readers.
+Older option names still work, but the current names take priority:
+
+- Threads: `asyncDownloadThreads`, then `spark.remoteFile.asyncDownload.threads`.
+- Connection timeout: `connectTimeout`, then `connectionTimeout`, then `spark.remoteFile.connectionTimeout` (milliseconds).
+
+All readers default to 4 threads and 30 seconds.
 
 ### Other
 
@@ -161,7 +167,7 @@ Legacy options `spark.remoteFile.asyncDownload.threads` and `spark.remoteFile.co
 
 ### Batch Mode
 
-The authentication and TLS options below are illustrative and require support from `my-client`.
+This example assumes `my-client` supports the authentication and TLS options shown.
 
 ```scala
 val df = spark.read
@@ -213,7 +219,7 @@ stream.writeStream
 
 ## Output Schema
 
-Every row produced by this DataSource follows this schema:
+Each row has the following fields:
 
 ```
 root
@@ -233,9 +239,9 @@ root
 
 ## Implementing a Custom Client
 
-To integrate a new HTTP-based file source, implement the `RemoteFileClient` trait and register it via Java `ServiceLoader`.
+Implement `RemoteFileClient` to list and download files, then register it with Java `ServiceLoader`.
 
-Client implementations own HTTP request construction, authentication, request timeouts, retries/backoff, and response parsing. Document which options they honor and reject unsupported security settings rather than silently ignoring them. Async clients receive framework-managed resources with the configuration described above; receiving those resources does not implement request-level policies automatically.
+Your client handles HTTP requests, authentication, request timeouts, retries, and response parsing. Document the options it supports and reject unsupported security settings. This also applies to async clients using the connector’s shared HTTP resources.
 
 ### 1. Implement the trait
 
@@ -270,7 +276,7 @@ class MyRemoteClient extends RemoteFileClient {
 }
 ```
 
-> **Tip:** Optionally implement `AsyncRemoteFileClient` to enable the async prefetch pipeline, or `FileSorter` to control file ordering.
+Implement `AsyncRemoteFileClient` to support background downloads, or `FileSorter` to control file order.
 
 ### 2. Register via ServiceLoader
 
@@ -329,14 +335,14 @@ spark.read
 | `RemoteFileTableProvider`        | Entry point; registered as the `httpds` format         |
 | `RemoteFileBatch`                | Plans partitions and distributes files round-robin        |
 | `RemoteMicroBatchStream`         | Tracks offsets and polls for new files                    |
-| `RemoteFilePartitionReader`      | Synchronous per-partition file download and row emission  |
-| `AsyncRemoteFilePartitionReader` | Asynchronous variant with configurable prefetch queue     |
+| `RemoteFilePartitionReader`      | Downloads files and returns rows for a partition  |
+| `AsyncRemoteFilePartitionReader` | Downloads files ahead of processing for a partition     |
 | `ClientRegistry`                 | Discovers client implementations via Java `ServiceLoader` |
-| `RemoteFileDataSourceOptions`    | Typed configuration with validation and defaults          |
+| `RemoteFileDataSourceOptions`    | Reads and checks options, and supplies defaults          |
 
 ## Metrics
 
-The connector exposes custom **Spark task metrics** visible in the Spark UI:
+The Spark UI shows these metrics for each task:
 
 | Metric               | Description                         |
 |----------------------|-------------------------------------|
@@ -346,7 +352,7 @@ The connector exposes custom **Spark task metrics** visible in the Spark UI:
 | `bytesThroughput`    | Bytes per second                    |
 | `recordsThroughput`  | Records per second                  |
 
-Aggregated metrics (min / max / avg) are reported at the job level.
+Job metrics also report minimum, maximum, and average values.
 
 ## Building & Testing
 
@@ -384,7 +390,7 @@ Contributions are welcome! Please read the [Contributing Guide](CONTRIBUTING.md)
 - Simone DE SANTIS ([@sdeswork](https://github.com/sdeswork))
 - Guillaume LECLERC ([@guleclerc](https://github.com/guleclerc))
 
-See [.github/CODEOWNERS](.github/CODEOWNERS) for review ownership, and [SECURITY.md](SECURITY.md) to report vulnerabilities.
+See [.github/CODEOWNERS](.github/CODEOWNERS) for reviewers, and [SECURITY.md](SECURITY.md) to report vulnerabilities.
 
 ## License
 
