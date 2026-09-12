@@ -1,5 +1,6 @@
 # httpds-spark
 
+[![CI](https://github.com/AmadeusITGroup/httpds-spark/actions/workflows/ci.yml/badge.svg)](https://github.com/AmadeusITGroup/httpds-spark/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Spark](https://img.shields.io/badge/Spark-3.5.0-E25A1C?logo=apachespark&logoColor=white)](https://spark.apache.org/)
 [![Scala](https://img.shields.io/badge/Scala-2.12-DC322F?logo=scala&logoColor=white)](https://www.scala-lang.org/)
