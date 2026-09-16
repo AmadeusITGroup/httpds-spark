@@ -107,34 +107,16 @@ releaseProcess := Seq[ReleaseStep](
 releaseCommitMessage := s"chore(release): set version to ${(ThisBuild / version).value} [skip ci]"
 releaseNextCommitMessage := s"chore(release): bump version to ${(ThisBuild / version).value} [skip ci]"
 
-// Publishing is environment-driven so the same build serves the public
-// GitHub Packages release and any internal mirror, without hardcoding internal
-// infrastructure here. To target a different repository at publish time, export:
-//   PUBLISH_REPO_URL   - target Maven repo URL (e.g. a snapshot/release repo)
-//   PUBLISH_REPO_NAME  - optional display name for that repo
-//   PUBLISH_REALM / PUBLISH_HOST / PUBLISH_USER / PUBLISH_PASSWORD - credentials
-// When unset, publishing defaults to GitHub Packages.
-ThisBuild / credentials ++= {
-  val envCreds = for {
-    realm <- sys.env.get("PUBLISH_REALM")
-    host  <- sys.env.get("PUBLISH_HOST")
-    user  <- sys.env.get("PUBLISH_USER")
-    pass  <- sys.env.get("PUBLISH_PASSWORD")
-  } yield Credentials(realm, host, user, pass)
+// PUBLISH SETUP (Maven style) — publishes to this repository's GitHub Packages registry.
+// Credentials are supplied via GITHUB_REGISTRY_TOKEN (set to GITHUB_TOKEN in the release workflow).
+ThisBuild / credentials += Credentials(
+  "GitHub Package Registry",
+  "maven.pkg.github.com",
+  "",
+  sys.env.getOrElse("GITHUB_REGISTRY_TOKEN", "")
+)
 
-  envCreds match {
-    case Some(c) => Seq(c)
-    case None    => Seq(Credentials("GitHub Package Registry", "maven.pkg.github.com", "", sys.env.getOrElse("GITHUB_REGISTRY_TOKEN", "")))
-  }
-}
-
-// PUBLISH SETUP (Maven style)
-ThisBuild / publishTo := {
-  sys.env.get("PUBLISH_REPO_URL") match {
-    case Some(url) => Some(sys.env.getOrElse("PUBLISH_REPO_NAME", "Internal Repository") at url)
-    case None      => Some("GitHub Packages" at "https://maven.pkg.github.com/AmadeusITGroup/httpds-spark")
-  }
-}
+ThisBuild / publishTo := Some("GitHub Packages" at "https://maven.pkg.github.com/AmadeusITGroup/httpds-spark")
 
 ThisBuild / publishMavenStyle := true
 // Additional Maven metadata
