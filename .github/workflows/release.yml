@@ -1,0 +1,169 @@
+name: "Release"
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: "Release version (e.g. 1.1.0 — no 'v' prefix)"
+        required: true
+      next_snapshot_version:
+        description: "Next development version (e.g. 1.2.0-SNAPSHOT)"
+        required: true
+
+permissions:
+  contents: write
+  packages: write
+  pull-requests: write
+
+env:
+  RELEASE_VERSION: ${{ inputs.release_version }}
+  NEXT_SNAPSHOT_VERSION: ${{ inputs.next_snapshot_version }}
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  validate-inputs:
+    name: "Validate inputs"
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Validate release_version"
+        run: |
+          [[ "$RELEASE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] \
+            || { echo "❌ release_version must be a semver string (e.g. 1.1.0)"; exit 1; }
+
+      - name: "Validate next_snapshot_version"
+        run: |
+          [[ "$NEXT_SNAPSHOT_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+-SNAPSHOT$ ]] \
+            || { echo "❌ next_snapshot_version must be a semver SNAPSHOT string (e.g. 1.2.0-SNAPSHOT)"; exit 1; }
+
+  quality-gates:
+    name: "Quality Gates"
+    needs: [validate-inputs]
+    uses: ./.github/workflows/quality-gates.yml
+    with:
+      artifact-name: release-check-artefacts
+    permissions:
+      contents: read
+      checks: write
+
+  publish:
+    name: "Publish"
+    needs: [quality-gates]
+    runs-on: ubuntu-latest
+    environment: release
+    env:
+      GITHUB_REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: ./.github/actions/setup-sbt
+        with:
+          java-version: "11"
+          sbt-runner-version: "1.12.12"
+
+      - name: "Configure git identity"
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+
+      - name: "Run sbt-release"
+        run: |
+          sbt "release with-defaults release-version $RELEASE_VERSION next-version $NEXT_SNAPSHOT_VERSION"
+
+      - name: "Publish summary"
+        run: |
+          echo "## ✅ Publish complete" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Field | Value |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|-------|-------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Artifact | \`com.amadeus.spark:httpds-spark_2.12:${{ inputs.release_version }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Registry | https://maven.pkg.github.com/AmadeusITGroup/httpds-spark |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Tag | \`v${{ inputs.release_version }}\` |" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: "Notify on failure"
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.repos.createCommitComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: context.sha,
+              body: `❌ Release workflow failed at job \`publish\`. [View run](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`
+            });
+
+  github-release:
+    name: "GitHub Release"
+    needs: [publish]
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refs/tags/v${{ inputs.release_version }}
+          fetch-depth: 0
+
+      - uses: ./.github/actions/setup-sbt
+        with:
+          java-version: "11"
+          sbt-runner-version: "1.12.12"
+
+      - name: "Build release artefacts from tag"
+        run: |
+          sbt clean package
+          RELEASE_JAR="target/scala-2.12/httpds-spark_2.12-${RELEASE_VERSION}.jar"
+          test -f "$RELEASE_JAR"
+          tar cf artefacts.tar "$RELEASE_JAR"
+
+      - name: "Determine previous tag"
+        id: prev-tag
+        run: |
+          PREV_TAG=$(git describe --tags --abbrev=0 "v${{ inputs.release_version }}~1" 2>/dev/null \
+            || gh release list --limit 1 --json tagName --jq '.[0].tagName' 2>/dev/null \
+            || echo "")
+          echo "tag=${PREV_TAG}" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: "Create GitHub Release"
+        run: |
+          PREV_TAG="${{ steps.prev-tag.outputs.tag }}"
+          if [ -n "$PREV_TAG" ]; then
+            gh release create "v${{ inputs.release_version }}" \
+              --verify-tag \
+              --title "v${{ inputs.release_version }}" \
+              --generate-notes \
+              --notes-start-tag "$PREV_TAG" \
+              artefacts.tar
+          else
+            gh release create "v${{ inputs.release_version }}" \
+              --verify-tag \
+              --title "v${{ inputs.release_version }}" \
+              --generate-notes \
+              artefacts.tar
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: "Release summary"
+        run: |
+          echo "## 🚀 GitHub Release created" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Release [v${{ inputs.release_version }}](https://github.com/${{ github.repository }}/releases/tag/v${{ inputs.release_version }}) is live." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: "Notify on failure"
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.repos.createCommitComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: context.sha,
+              body: `❌ Release workflow failed at job \`github-release\`. The artifact is already published to GitHub Packages. [View run](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`
+            });

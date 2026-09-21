@@ -1,0 +1,24 @@
+name: "CI"
+
+on:
+  push:
+    branches: ["main"]
+    paths-ignore: ["docs/**", "**/*.md", "**/LICENSE", "**/.gitignore"]
+  pull_request:
+    branches: ["main"]
+    paths-ignore: ["docs/**", "**/*.md", "**/LICENSE", "**/.gitignore"]
+    types:
+      - opened
+      - reopened
+      - synchronize
+  workflow_dispatch:
+
+jobs:
+  build:
+    uses: ./.github/workflows/quality-gates.yml
+    with:
+      artifact-name: Artefacts
+    permissions:
+      contents: read
+      checks: write
+

@@ -1,0 +1,23 @@
+name: "Setup sbt"
+description: "Checkout the repository, set up Java (Temurin) with sbt cache, and install the sbt runner."
+
+inputs:
+  java-version:
+    description: "Java version to install (Temurin distribution)"
+    default: "11"
+  sbt-runner-version:
+    description: "Version of the sbt runner to install via sbt/setup-sbt"
+    default: "1.12.12"
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/setup-java@v5
+      with:
+        distribution: "temurin"
+        java-version: ${{ inputs.java-version }}
+        cache: "sbt"
+
+    - uses: sbt/setup-sbt@v1
+      with:
+        sbt-runner-version: ${{ inputs.sbt-runner-version }}

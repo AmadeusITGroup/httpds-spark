@@ -1,0 +1,2 @@
+# Scalafmt expects LF; keep Scala sources stable across Windows and Linux checkouts.
+*.scala text eol=lf

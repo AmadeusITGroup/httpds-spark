@@ -1,0 +1,96 @@
+package com.amadeus.spark.datasource.remote.client
+
+import com.amadeus.spark.datasource.remote.conf.RemoteFileDataSourceOptions
+import org.apache.spark.internal.Logging
+
+import scala.language.existentials
+import scala.util.Try
+
+/**
+ * Client interface for interacting with remote-based file sources.
+ *
+ * Implementations own request construction, authentication, HTTP request timeouts,
+ * retries/backoff, TLS requirements, and response parsing. The framework parses and
+ * passes options but does not implement these request-level policies. Document supported
+ * options and reject unsupported security settings rather than silently ignoring them.
+ */
+trait RemoteFileClient extends RemoteFileClientRegister with Serializable with Logging {
+
+  /**
+   * Initializes the client with the given options.
+   *
+   * Override if the implementation class does not provide a constructor
+   * that accepts [[RemoteFileDataSourceOptions]].
+   *
+   * @param options configuration options for the client
+   */
+  def init(options: RemoteFileDataSourceOptions): Unit = { val _ = options }
+
+  /**
+   * Lists available log files from the remote endpoint.
+   *
+   * @return sequence of [[RemoteFile]] representing available log files
+   */
+  def listLogFiles(): Seq[RemoteFile]
+
+  /**
+   * Lists and sorts available log files from the remote endpoint.
+   * If the client implements FileSorter, applies custom sorting logic.
+   * Otherwise, sorts by fetchedAt timestamp (default behavior).
+   *
+   * @return sequence of sorted RemoteFile
+   */
+  def listAndSortLogFiles(): Seq[RemoteFile] = {
+    val files = listLogFiles()
+    this match {
+      case sorter: FileSorter =>
+        logDebug(s"Client implements FileSorter, applying custom sort to ${files.size} files")
+        sorter.sortFiles(files)
+      case _ =>
+        logDebug(s"Client does not implement FileSorter, sorting ${files.size} files by fetchedAt")
+        files.sortBy(_.fetchedAt.getTime)
+    }
+  }
+
+  /**
+   * Downloads a log file and returns the result with metadata.
+   *
+   * @param filename name of the log file to download
+   * @return DownloadResult representing the outcome of the download operation
+   */
+  def downloadLogFileWithResult(filename: String): DownloadResult
+
+  /**
+   * Closes the client and releases any resources.
+   */
+  def close(): Unit
+}
+
+object RemoteFileClient extends Logging {
+
+  /**
+   * Creates and initializes the [[RemoteFileClient]] based on the configuration.
+   *
+   * @param config configuration options
+   * @return initialized [[RemoteFileClient]]
+   */
+  def from(config: RemoteFileDataSourceOptions): RemoteFileClient = {
+    val clientClass          = ClientRegistry.lookupDataSource(config.remoteClient)
+    val optionArgConstructor = Try(clientClass.getDeclaredConstructor(classOf[RemoteFileDataSourceOptions])).toOption
+
+    optionArgConstructor match {
+      case Some(constructor) =>
+        logDebug("Instantiating remote file client with RemoteFileDataSourceOptions constructor")
+        // scalafix:off DisableSyntax.asInstanceOf
+        constructor.newInstance(config).asInstanceOf[RemoteFileClient]
+      // scalafix:on DisableSyntax.asInstanceOf
+      case None =>
+        logWarning(s"No constructor with RemoteFileDataSourceOptions found for ${config.remoteClient}, trying empty constructor")
+        // scalafix:off DisableSyntax.asInstanceOf
+        val client = clientClass.getDeclaredConstructor().newInstance().asInstanceOf[RemoteFileClient]
+        // scalafix:on DisableSyntax.asInstanceOf
+        client.init(config)
+        client
+    }
+  }
+}
